@@ -757,22 +757,22 @@
   
   <!-- 支付弹窗 - 高端版 -->
   <div id="paywallModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'paywallModal')">
-    <div class="modal-content p-6" onclick="event.stopPropagation()">
+    <div class="modal-content p-5" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       
       <!-- 头部 -->
-      <div class="text-center mb-4">
-        <h2 class="font-display font-bold text-xl mb-1">Unlock Premium</h2>
+      <div class="text-center mb-3">
+        <h2 class="font-display font-bold text-lg mb-0.5">Unlock Premium</h2>
         <p class="text-white/60 text-xs">Get unlimited access to all 72 episodes</p>
       </div>
       
       <!-- 订阅档位 -->
-      <div class="space-y-3 mb-6">
+      <div class="space-y-2 mb-4">
         <div class="plan-card selected" onclick="selectPlan(this, 3)">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                <span class="text-white font-bold text-sm">3D</span>
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                <span class="text-white font-bold text-xs">3D</span>
               </div>
               <div>
                 <div class="flex items-center gap-2">
@@ -790,9 +790,9 @@
         
         <div class="plan-card" onclick="selectPlan(this, 7)">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                <span class="text-white font-bold text-sm">7D</span>
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                <span class="text-white font-bold text-xs">7D</span>
               </div>
               <div>
                 <span class="font-semibold text-sm">Weekly Pass</span>
@@ -807,9 +807,9 @@
         
         <div class="plan-card" onclick="selectPlan(this, 14)">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                <span class="text-white font-bold text-sm">14D</span>
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                <span class="text-white font-bold text-xs">14D</span>
               </div>
               <div>
                 <div class="flex items-center gap-2">
@@ -827,35 +827,35 @@
       </div>
       
       <!-- VIP权益 -->
-      <div class="bg-white/5 rounded-2xl p-4 mb-5 border border-white/10">
-        <p class="text-sm font-semibold mb-3 text-white/80">VIP Benefits</p>
-        <div class="benefit-item">
-          <div class="benefit-icon">
-            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="bg-white/5 rounded-xl p-3 mb-4 border border-white/10">
+        <p class="text-xs font-semibold mb-2 text-white/80">VIP Benefits</p>
+        <div class="benefit-item py-1.5">
+          <div class="benefit-icon w-6 h-6">
+            <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <span class="text-sm text-white/70">Watch all 72 episodes</span>
+          <span class="text-xs text-white/70">Watch all 72 episodes</span>
         </div>
-        <div class="benefit-item">
-          <div class="benefit-icon">
-            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="benefit-item py-1.5">
+          <div class="benefit-icon w-6 h-6">
+            <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <span class="text-sm text-white/70">New episodes priority</span>
+          <span class="text-xs text-white/70">New episodes priority</span>
         </div>
       </div>
       
       <!-- 支付方式 -->
-      <div class="space-y-2 mb-5">
-        <p class="text-white/60 text-xs mb-2">Payment Method</p>
-        <div class="payment-method selected" onclick="selectPaymentMethod(this, 'paypal')">
+      <div class="space-y-1.5 mb-4">
+        <p class="text-white/60 text-xs mb-1.5">Payment Method</p>
+        <div class="payment-method selected py-2.5" onclick="selectPaymentMethod(this, 'paypal')">
           <div class="radio"></div>
-          <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" class="h-5">
+          <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" class="h-4">
           <span class="text-sm font-medium">PayPal</span>
         </div>
-        <div class="payment-method" onclick="selectPaymentMethod(this, 'card')">
+        <div class="payment-method py-2.5" onclick="selectPaymentMethod(this, 'card')">
           <div class="radio"></div>
           <div class="flex items-center gap-2">
             <svg class="w-8 h-5" viewBox="0 0 48 32" fill="none">
@@ -868,7 +868,7 @@
         </div>
       </div>
       
-      <button class="subscribe-btn mb-4" onclick="handleSubscribeClick()">
+      <button class="subscribe-btn mb-3 py-3.5" onclick="handleSubscribeClick()">
         Subscribe Now - $4.99
       </button>
       
