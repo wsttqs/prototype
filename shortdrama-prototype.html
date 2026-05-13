@@ -664,15 +664,7 @@
     </div>
   </nav>
   
-  <!-- 页面指示器 -->
-  <div class="page-indicator">
-    <div class="indicator-dot active" onclick="goToPage(0)"></div>
-    <div class="indicator-dot" onclick="goToPage(1)"></div>
-    <div class="indicator-dot" onclick="goToPage(2)"></div>
-    <div class="indicator-dot" onclick="goToPage(3)"></div>
-    <div class="indicator-dot" onclick="goToPage(4)"></div>
-    <div class="indicator-dot locked" onclick="goToPage(5)"></div>
-  </div>
+  <!-- 页面指示器已移除 -->
   
   <!-- 页面滚动容器 -->
   <div class="page-container" id="pageContainer">
@@ -769,14 +761,9 @@
       <div class="modal-handle"></div>
       
       <!-- 头部 -->
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 mx-auto mb-4 flex items-center justify-center shadow-lg shadow-orange-500/30">
-          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        </div>
-        <h2 class="font-display font-bold text-2xl mb-2">Unlock Premium</h2>
-        <p class="text-white/60 text-sm">Get unlimited access to all 72 episodes</p>
+      <div class="text-center mb-4">
+        <h2 class="font-display font-bold text-xl mb-1">Unlock Premium</h2>
+        <p class="text-white/60 text-xs">Get unlimited access to all 72 episodes</p>
       </div>
       
       <!-- 订阅档位 -->
@@ -1220,7 +1207,6 @@
     let isScrollingLocked = false;
     
     const pageContainer = document.getElementById('pageContainer');
-    const indicatorDots = document.querySelectorAll('.indicator-dot');
     const scrollHint = document.getElementById('scrollHint');
     
     document.addEventListener('DOMContentLoaded', () => {
@@ -1253,12 +1239,6 @@
         updateUI();
         renderEpisodeGrid();
       }
-      
-      indicatorDots.forEach((dot, index) => {
-        const pageNum = index + 1;
-        dot.classList.toggle('active', pageNum === currentPage);
-        dot.classList.toggle('locked', pageNum > FREE_EPISODES && !isVIP);
-      });
       
       scrollHint.style.opacity = scrollTop > 50 ? '0' : '1';
     }
