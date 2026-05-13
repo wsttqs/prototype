@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Short Drama - Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold-start: rgb(255, 240, 220);
+      --gold-end: rgb(242, 202, 145);
+    }
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Outfit', sans-serif;
+      background: #0f0f23;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+    
+    /* 页面滚动容器 */
+    .page-container {
+      height: 100vh;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+    
+    .page {
+      height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* 页面渐变背景 */
+    .page-gradient {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    
+    .page-gradient-1 { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%); }
+    .page-gradient-2 { background: linear-gradient(135deg, #2e1a3e 0%, #1a1621 50%, #0f0f23 100%); }
+    .page-gradient-3 { background: linear-gradient(135deg, #1a3e2e 0%, #16213e 50%, #0f0f23 100%); }
+    .page-gradient-4 { background: linear-gradient(135deg, #3e1a2e 0%, #2e1621 50%, #0f0f23 100%); }
+    .page-gradient-5 { background: linear-gradient(135deg, #1a2e3e 0%, #16213e 50%, #0f0f23 100%); }
+    
+    .page-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .episode-badge-page {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+    
+    .episode-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    
+    .episode-desc {
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      max-width: 320px;
+      line-height: 1.6;
+    }
+    
+    .lock-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 5;
+    }
+    
+    .lock-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    
+    .gradient-overlay-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 300px;
+      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+    
+    /* 底部信息栏 */
+    .bottom-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 16px;
+    }
+    
+    /* 进度条 */
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff4e6c, #ff6b6b);
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+    
+    /* 选集弹窗 */
+    .episode-list-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .episode-list-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .episode-list-item.current {
+      background: rgba(255, 78, 108, 0.2);
+      border: 1px solid rgba(255, 78, 108, 0.5);
+    }
+    
+    .episode-list-item.locked {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .episode-list-item.locked:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .avatar:active {
+      transform: scale(0.95);
+    }
+    
+    /* 页面指示器 */
+    .page-indicator {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 50;
+    }
+    
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .indicator-dot.active {
+      background: #fff;
+      transform: scale(1.3);
+    }
+    
+    .indicator-dot.locked {
+      background: rgba(255,100,100,0.4);
+    }
+    
+    /* 顶部导航栏 */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+    }
+    
+    /* Modal样式 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-content {
+      background: #1a1a2e;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    
+    .modal-overlay.active .modal-content {
+      transform: translateY(0);
+    }
+    
+    .subscribe-btn {
+      background: linear-gradient(135deg, var(--gold-start) 0%, var(--gold-end) 100%);
+      color: #1a1a2e;
+      font-weight: 600;
+      padding: 14px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    
+    .subscribe-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(242, 202, 145, 0.4);
+    }
+    
+    .plan-card {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .plan-card:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    
+    .plan-card.selected {
+      background: rgba(255, 78, 108, 0.15);
+      border-color: rgb(255, 78, 108);
+    }
+    
+    .social-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .social-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .countdown-box {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      margin: 12px auto;
+    }
+    
+    /* 挽留弹窗特殊样式 */
+    .retention-modal {
+      background: linear-gradient(180deg, #2a1a3e 0%, #1a1a2e 100%);
+    }
+    
+    .discount-tag {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    
+    .vip-badge {
+      background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+      color: #1a1a2e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    
+    /* 用户中心样式 */
+    .user-center-modal {
+      background: #1a1a2e;
+    }
+    
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .menu-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .menu-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* 支付成功弹窗 */
+    .success-modal {
+      background: linear-gradient(180deg, #1a3e2e 0%, #1a1a2e 100%);
+    }
+    
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 14px;
+    }
+    
+    .toast.show {
+      opacity: 1;
+    }
+    
+    /* 滚动提示 */
+    @keyframes bounceUp {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    .scroll-hint {
+      animation: bounceUp 1.5s ease-in-out infinite;
+    }
+    
+    /* VIP解锁状态 */
+    .page.unlocked .lock-overlay {
+      display: none;
+    }
+    
+    .page.unlocked .indicator-dot {
+      background: rgba(100,255,100,0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部导航栏 -->
+  <nav class="top-nav">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+      <span class="font-display font-semibold text-lg">ShortDrama</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- VIP状态指示 -->
+      <div id="vipIndicator" class="hidden">
+        <span class="vip-badge">VIP</span>
+      </div>
+      <!-- 登录状态指示 -->
+      <div id="loginStatus" class="text-white/60 text-sm">
+        Guest
+      </div>
+      <div class="avatar" onclick="openUserCenter()">
+        <svg id="avatarIcon" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- 页面指示器 -->
+  <div class="page-indicator">
+    <div class="indicator-dot active" onclick="goToPage(0)"></div>
+    <div class="indicator-dot" onclick="goToPage(1)"></div>
+    <div class="indicator-dot locked" onclick="goToPage(2)"></div>
+    <div class="indicator-dot locked" onclick="goToPage(3)"></div>
+    <div class="indicator-dot locked" onclick="goToPage(4)"></div>
+  </div>
+  
+  <!-- 页面滚动容器 -->
+  <div class="page-container" id="pageContainer">
+    <!-- 第1页 - 免费 -->
+    <section class="page" data-page="1" id="page1">
+      <div class="page-gradient page-gradient-1"></div>
+      <div class="page-content">
+        <span class="episode-badge-page text-green-400">FREE EPISODE</span>
+        <h2 class="episode-title">Page 1</h2>
+        <p class="episode-desc">Free preview content. This is the first episode available to all users without subscription.</p>
+      </div>
+      <div class="gradient-overlay-bottom"></div>
+    </section>
+    
+    <!-- 第2页 - 免费 -->
+    <section class="page" data-page="2" id="page2">
+      <div class="page-gradient page-gradient-2"></div>
+      <div class="page-content">
+        <span class="episode-badge-page text-green-400">FREE EPISODE</span>
+        <h2 class="episode-title">Page 2</h2>
+        <p class="episode-desc">Another free episode showcasing the story introduction and character development.</p>
+      </div>
+      <div class="gradient-overlay-bottom"></div>
+    </section>
+    
+    <!-- 第3页 - 付费锁定 -->
+    <section class="page" data-page="3" id="page3">
+      <div class="page-gradient page-gradient-3"></div>
+      <div class="lock-overlay">
+        <div class="lock-icon">
+          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <p class="text-white/80 font-medium mb-2">VIP Content</p>
+        <p class="text-white/50 text-sm">Subscribe to unlock this episode</p>
+        <button class="mt-4 px-6 py-2 bg-gradient-to-r from-red-500 to-pink-600 rounded-full text-white text-sm font-semibold" onclick="handleLockedPageClick()">
+          Subscribe Now
+        </button>
+      </div>
+      <div class="gradient-overlay-bottom"></div>
+    </section>
+    
+    <!-- 第4页 - 付费锁定 -->
+    <section class="page" data-page="4" id="page4">
+      <div class="page-gradient page-gradient-4"></div>
+      <div class="lock-overlay">
+        <div class="lock-icon">
+          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <p class="text-white/80 font-medium mb-2">VIP Content</p>
+        <p class="text-white/50 text-sm">Subscribe to unlock this episode</p>
+        <button class="mt-4 px-6 py-2 bg-gradient-to-r from-red-500 to-pink-600 rounded-full text-white text-sm font-semibold" onclick="handleLockedPageClick()">
+          Subscribe Now
+        </button>
+      </div>
+      <div class="gradient-overlay-bottom"></div>
+    </section>
+    
+    <!-- 第5页 - 付费锁定 -->
+    <section class="page" data-page="5" id="page5">
+      <div class="page-gradient page-gradient-5"></div>
+      <div class="lock-overlay">
+        <div class="lock-icon">
+          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <p class="text-white/80 font-medium mb-2">VIP Content</p>
+        <p class="text-white/50 text-sm">Subscribe to unlock this episode</p>
+        <button class="mt-4 px-6 py-2 bg-gradient-to-r from-red-500 to-pink-600 rounded-full text-white text-sm font-semibold" onclick="handleLockedPageClick()">
+          Subscribe Now
+        </button>
+      </div>
+      <div class="gradient-overlay-bottom"></div>
+    </section>
+  </div>
+  
+  <!-- 底部信息栏 + 进度条 -->
+  <div class="bottom-info" id="bottomInfo">
+    <div class="flex items-center gap-3 mb-2">
+      <div class="flex-1">
+        <h3 class="font-display font-semibold text-base mb-1">The CEO's Secret Love</h3>
+        <p class="text-white/50 text-xs" id="currentEpisodeInfo">Episode 1 / 5 - FREE</p>
+      </div>
+      <button class="px-4 py-2 bg-white/10 rounded-lg text-white text-sm" onclick="openEpisodeList()">
+        Episodes
+      </button>
+    </div>
+    <div class="progress-bar" onclick="handleProgressClick(event)">
+      <div class="fill" id="progressFill" style="width: 20%"></div>
+    </div>
+  </div>
+  
+  <!-- 底部滚动提示 -->
+  <div class="fixed bottom-32 left-0 right-0 flex flex-col items-center scroll-hint" id="scrollHint">
+    <p class="text-white/40 text-xs mb-2">Scroll for more</p>
+    <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+    </svg>
+  </div>
+  
+  <!-- ========================================== -->
+  <!-- 付费弹窗 -->
+  <!-- ========================================== -->
+  <div id="paywallModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'paywallModal')">
+    <div class="modal-content p-6" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      
+      <div class="text-center mb-6">
+        <h2 class="font-display font-bold text-2xl mb-2">Unlock All Episodes</h2>
+        <p class="text-white/60 text-sm">Choose a subscription plan to continue watching</p>
+      </div>
+      
+      <!-- 订阅档位 -->
+      <div class="space-y-3 mb-6">
+        <div class="plan-card selected" onclick="selectPlan(this, 3)">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold">3-Day Pass</span>
+                <span class="text-xs px-2 py-0.5 bg-red-500/20 text-red-400 rounded">POPULAR</span>
+              </div>
+              <p class="text-white/50 text-sm mt-1" id="price3">$4.99 / 3 days</p>
+            </div>
+            <div class="w-6 h-6 rounded-full border-2 border-red-500 flex items-center justify-center">
+              <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="plan-card" onclick="selectPlan(this, 7)">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-semibold">Weekly Pass</span>
+              <p class="text-white/50 text-sm mt-1">$9.99 / 7 days</p>
+            </div>
+            <div class="w-6 h-6 rounded-full border-2 border-white/30"></div>
+          </div>
+        </div>
+        
+        <div class="plan-card" onclick="selectPlan(this, 14)">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold">14-Day Pass</span>
+                <span class="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded">BEST VALUE</span>
+              </div>
+              <p class="text-white/50 text-sm mt-1">$16.99 / 14 days</p>
+            </div>
+            <div class="w-6 h-6 rounded-full border-2 border-white/30"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- VIP权益 -->
+      <div class="bg-white/5 rounded-xl p-4 mb-6">
+        <p class="text-sm font-medium mb-3">VIP Benefits:</p>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Watch all dramas unlimited
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            New episodes update first
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Ad-free experience
+          </li>
+        </ul>
+      </div>
+      
+      <button class="subscribe-btn mb-4" onclick="handleSubscribeClick()">
+        Subscribe Now - $4.99
+      </button>
+      
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <span class="text-white/40 text-xs">Pay with</span>
+        <span class="text-white/60 text-sm font-medium">PayPal</span>
+      </div>
+      
+      <p class="text-center text-white/40 text-xs mb-4">
+        By subscribing, you agree to our Terms of Service
+      </p>
+      
+      <button class="w-full text-center text-white/50 text-sm py-2" onclick="closePaywall()">
+        Maybe Later
+      </button>
+    </div>
+  </div>
+  
+  <!-- ========================================== -->
+  <!-- 挽留弹窗 (50% OFF) -->
+  <!-- ========================================== -->
+  <div id="retentionModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'retentionModal')">
+    <div class="modal-content p-6 retention-modal" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      
+      <div class="text-center mb-6">
+        <span class="discount-tag mb-3 inline-block">SPECIAL OFFER</span>
+        <h2 class="font-display font-bold text-2xl mb-2">Don't Miss Out!</h2>
+        <p class="text-white/60 text-sm">Get 50% OFF your first subscription</p>
+      </div>
+      
+      <!-- 倒计时 -->
+      <div class="flex justify-center mb-6">
+        <div class="countdown-box">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="countdown" class="text-white font-bold">05:00</span>
+        </div>
+      </div>
+      
+      <!-- 价格对比 -->
+      <div class="bg-white/10 rounded-xl p-5 mb-6 text-center">
+        <div class="flex items-center justify-center gap-6">
+          <div>
+            <p class="text-white/50 text-xl line-through">$4.99</p>
+            <p class="text-white/50 text-xs mt-1">Original</p>
+          </div>
+          <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+          </svg>
+          <div>
+            <p class="text-green-400 font-bold text-3xl" id="discountedPrice">$2.49</p>
+            <p class="text-green-400/80 text-xs mt-1">Limited Price</p>
+          </div>
+        </div>
+        <p class="text-white/60 text-sm mt-4">3-Day VIP Pass</p>
+        <p class="text-white/40 text-xs mt-2">This price will be saved for your next visit</p>
+      </div>
+      
+      <button class="subscribe-btn mb-4" onclick="handleRetentionSubscribeClick()">
+        Claim Offer - $2.49
+      </button>
+      
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <span class="text-white/40 text-xs">Pay with</span>
+        <span class="text-white/60 text-sm font-medium">PayPal</span>
+      </div>
+      
+      <button class="w-full text-center text-white/50 text-sm py-2" onclick="closeRetention()">
+        No Thanks
+      </button>
+    </div>
+  </div>
+  
+  <!-- ========================================== -->
+  <!-- 选集弹窗 -->
+  <!-- ========================================== -->
+  <div id="episodeModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'episodeModal')">
+    <div class="modal-content p-6" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display font-bold text-xl">All Episodes</h2>
+        <span class="text-white/50 text-sm">5 Episodes</span>
+      </div>
+      
+      <!-- 剧集信息头部 -->
+      <div class="bg-white/5 rounded-xl p-4 mb-4">
+        <div class="flex gap-4">
+          <div class="w-20 h-28 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 flex-shrink-0 flex items-center justify-center">
+            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-display font-semibold text-lg mb-1">The CEO's Secret Love</h3>
+            <p class="text-white/50 text-sm line-clamp-2">A powerful CEO falls for his secretary, but after the engagement, he discovers her true identity is actually the daughter of a rival company...</p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs px-2 py-0.5 bg-white/10 rounded">Romance</span>
+              <span class="text-xs px-2 py-0.5 bg-white/10 rounded">80 Episodes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="space-y-2 max-h-[50vh] overflow-y-auto">
+        <!-- 第1集 - 免费 -->
+        <div class="episode-list-item" onclick="switchToEpisode(1)">
+          <div class="w-16 h-12 rounded-lg bg-gradient-to-br from-green-500/30 to-green-600/30 flex items-center justify-center mr-3 flex-shrink-0">
+            <span class="text-green-400 font-bold">1</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white/90 text-sm font-medium truncate">Episode 1 - The Encounter</p>
+            <p class="text-white/40 text-xs truncate">Sarah meets the mysterious CEO at a gala...</p>
+            <p class="text-green-400 text-xs mt-0.5">FREE</p>
+          </div>
+          <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          </svg>
+        </div>
+        
+        <!-- 第2集 - 免费 -->
+        <div class="episode-list-item" onclick="switchToEpisode(2)">
+          <div class="w-16 h-12 rounded-lg bg-gradient-to-br from-green-500/30 to-green-600/30 flex items-center justify-center mr-3 flex-shrink-0">
+            <span class="text-green-400 font-bold">2</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white/90 text-sm font-medium truncate">Episode 2 - Secret Revealed</p>
+            <p class="text-white/40 text-xs truncate">The CEO's past comes to light...</p>
+            <p class="text-green-400 text-xs mt-0.5">FREE</p>
+          </div>
+          <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          </svg>
+        </div>
+        
+        <!-- 第3集 - VIP -->
+        <div class="episode-list-item locked" id="episode3Item">
+          <div class="w-16 h-12 rounded-lg bg-gradient-to-br from-red-500/30 to-pink-600/30 flex items-center justify-center mr-3 flex-shrink-0">
+            <span class="text-red-400 font-bold">3</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white/90 text-sm font-medium truncate">Episode 3 - The Contract</p>
+            <p class="text-white/40 text-xs truncate">A marriage proposal with hidden terms...</p>
+            <p class="text-red-400 text-xs mt-0.5">VIP</p>
+          </div>
+          <svg class="w-5 h-5 text-white/40 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        
+        <!-- 第4集 - VIP -->
+        <div class="episode-list-item locked" id="episode4Item">
+          <div class="w-16 h-12 rounded-lg bg-gradient-to-br from-red-500/30 to-pink-600/30 flex items-center justify-center mr-3 flex-shrink-0">
+            <span class="text-red-400 font-bold">4</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white/90 text-sm font-medium truncate">Episode 4 - Truth Unfolds</p>
+            <p class="text-white/40 text-xs truncate">Family secrets threaten everything...</p>
+            <p class="text-red-400 text-xs mt-0.5">VIP</p>
+          </div>
+          <svg class="w-5 h-5 text-white/40 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        
+        <!-- 第5集 - VIP -->
+        <div class="episode-list-item locked" id="episode5Item">
+          <div class="w-16 h-12 rounded-lg bg-gradient-to-br from-red-500/30 to-pink-600/30 flex items-center justify-center mr-3 flex-shrink-0">
+            <span class="text-red-400 font-bold">5</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white/90 text-sm font-medium truncate">Episode 5 - Family Ties</p>
+            <p class="text-white/40 text-xs truncate">The rival families clash...</p>
+            <p class="text-red-400 text-xs mt-0.5">VIP</p>
+          </div>
+          <svg class="w-5 h-5 text-white/40 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+      </div>
+      
+      <button class="w-full mt-4 py-3 bg-white/10 rounded-lg text-white/60 text-sm" onclick="closeModal('episodeModal')">
+        Close
+      </button>
+    </div>
+  </div>
+  
+  <!-- ========================================== -->
+  <!-- 登录弹窗 -->
+  <!-- ========================================== -->
+  <div id="loginModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'loginModal')">
+    <div class="modal-content p-6" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      
+      <div class="text-center mb-6">
+        <h2 class="font-display font-bold text-2xl mb-2">Sign In Required</h2>
+        <p class="text-white/60 text-sm">Please sign in to subscribe and unlock VIP content</p>
+      </div>
+      
+      <!-- 社交登录 -->
+      <div class="space-y-3 mb-6">
+        <button class="social-btn w-full" onclick="socialLogin('Google')">
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+        
+        <button class="social-btn w-full" onclick="socialLogin('Facebook')">
+          <svg class="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          <span>Continue with Facebook</span>
+        </button>
+        
+        <button class="social-btn w-full" onclick="socialLogin('Apple')">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+          </svg>
+          <span>Continue with Apple</span>
+        </button>
+        
+        <button class="social-btn w-full" onclick="socialLogin('TikTok')">
+          <svg class="w-5 h-5" fill="#fff" viewBox="0 0 24 24">
+            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+          </svg>
+          <span>Continue with TikTok</span>
+        </button>
+      </div>
+      
+      <div class="text-center">
+        <button class="text-white/50 text-sm py-2" onclick="closeModal('loginModal')">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ========================================== -->
+  <!-- 支付成功弹窗 -->
+  <!-- ========================================== -->
+  <div id="successModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'successModal')">
+    <div class="modal-content p-6 success-modal" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      
+      <div class="text-center py-8">
+        <div class="success-icon">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h2 class="font-display font-bold text-2xl mb-2">Welcome, VIP!</h2>
+        <p class="text-white/60 text-sm mb-4">Your subscription is now active</p>
+        
+        <div class="bg-white/10 rounded-xl p-4 mb-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-white/50 text-sm">Plan</p>
+              <p class="font-semibold" id="successPlan">3-Day VIP Pass</p>
+            </div>
+            <div>
+              <p class="text-white/50 text-sm">Expires</p>
+              <p class="font-semibold" id="successExpiry">May 16, 2026</p>
+            </div>
+          </div>
+        </div>
+        
+        <button class="subscribe-btn" onclick="closeSuccess()">
+          Start Watching
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ========================================== -->
+  <!-- 用户中心弹窗 -->
+  <!-- ========================================== -->
+  <div id="userCenterModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'userCenterModal')">
+    <div class="modal-content p-6 user-center-modal" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      
+      <!-- 访客状态 -->
+      <div id="userCenterGuest">
+        <div class="text-center mb-6">
+          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mx-auto mb-4 flex items-center justify-center">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <h2 class="font-display font-bold text-xl mb-1">Guest User</h2>
+          <p class="text-white/50 text-sm">Sign in to sync your data</p>
+        </div>
+        
+        <!-- 社交登录 -->
+        <div class="space-y-3 mb-6">
+          <button class="social-btn w-full" onclick="socialLogin('Google')">
+            <svg class="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+          
+          <button class="social-btn w-full" onclick="socialLogin('Facebook')">
+            <svg class="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>Continue with Facebook</span>
+          </button>
+          
+          <button class="social-btn w-full" onclick="socialLogin('Apple')">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            <span>Continue with Apple</span>
+          </button>
+          
+          <button class="social-btn w-full" onclick="socialLogin('TikTok')">
+            <svg class="w-5 h-5" fill="#fff" viewBox="0 0 24 24">
+              <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+            </svg>
+            <span>Continue with TikTok</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 已登录状态 -->
+      <div id="userCenterLoggedIn" class="hidden">
+        <div class="text-center mb-6">
+          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mx-auto mb-4 flex items-center justify-center">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <h2 class="font-display font-bold text-xl mb-1" id="loggedInUserName">User</h2>
+          <p class="text-white/50 text-sm" id="loggedInUserProvider">Signed in via Google</p>
+        </div>
+        
+        <!-- VIP状态 -->
+        <div class="bg-white/5 rounded-xl p-4 mb-4" id="vipStatusGuest">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-white/80 text-sm">VIP Status</p>
+              <p class="text-white/40 text-xs">No active subscription</p>
+            </div>
+            <button class="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 rounded-lg text-white text-sm font-semibold" onclick="closeUserCenter(); openPaywall();">
+              Subscribe
+            </button>
+          </div>
+        </div>
+        
+        <!-- 已登录VIP状态 -->
+        <div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 mb-4 hidden" id="vipStatusActive">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-yellow-400 text-sm font-semibold">VIP Member</p>
+              <p class="text-white/40 text-xs" id="vipExpiryText">Expires: May 16, 2026</p>
+            </div>
+            <span class="vip-badge">ACTIVE</span>
+          </div>
+        </div>
+        
+        <!-- 功能菜单 -->
+        <div class="space-y-2">
+          <div class="menu-item" onclick="showToast('Subscription history')">
+            <div class="menu-icon bg-blue-500/20">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-white/80 text-sm">Subscription History</p>
+              <p class="text-white/40 text-xs">View your active plans</p>
+            </div>
+            <svg class="w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+          
+          <div class="menu-item" onclick="showToast('Settings page')">
+            <div class="menu-icon bg-gray-500/20">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-white/80 text-sm">Settings</p>
+              <p class="text-white/40 text-xs">App preferences</p>
+            </div>
+            <svg class="w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+          
+          <div class="menu-item" onclick="showToast('Help & Support')">
+            <div class="menu-icon bg-green-500/20">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-white/80 text-sm">Help & Support</p>
+              <p class="text-white/40 text-xs">FAQs and contact</p>
+            </div>
+            <svg class="w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+        
+        <!-- 退出登录按钮 -->
+        <button class="w-full mt-6 py-3 bg-red-500/20 rounded-lg text-red-400 text-sm font-semibold" onclick="logout()">
+          Sign Out
+        </button>
+      </div>
+      
+      <button class="w-full mt-4 py-3 bg-white/10 rounded-lg text-white/60 text-sm" onclick="closeUserCenter()">
+        Close
+      </button>
+    </div>
+  </div>
+  
+  <!-- Toast提示 -->
+  <div id="toast" class="toast">
+    <span id="toastText"></span>
+  </div>
+
+  <script>
+    // 状态管理
+    let countdownTimer;
+    let countdownSeconds = 300;
+    let selectedPlan = 3;
+    let isDiscounted = localStorage.getItem('isDiscounted') === 'true';
+    let isVIP = localStorage.getItem('isVIP') === 'true';
+    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    let loggedInProvider = localStorage.getItem('loggedInProvider') || '';
+    let vipExpiry = localStorage.getItem('vipExpiry');
+    let currentPage = 1;
+    let paywallSource = ''; // 记录付费弹窗的来源
+    
+    // DOM元素
+    const pageContainer = document.getElementById('pageContainer');
+    const indicatorDots = document.querySelectorAll('.indicator-dot');
+    const scrollHint = document.getElementById('scrollHint');
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      updateUI();
+      updateEpisodeListState();
+      pageContainer.addEventListener('scroll', handleScroll);
+    });
+    
+    // 滚动处理
+    function handleScroll() {
+      const scrollTop = pageContainer.scrollTop;
+      const pageHeight = window.innerHeight;
+      const newPage = Math.round(scrollTop / pageHeight) + 1;
+      
+      if (newPage !== currentPage) {
+        currentPage = newPage;
+        updateUI();
+        
+        // 到达付费集数页面时，自动弹出付费弹窗
+        if (currentPage >= 3 && !isVIP) {
+          setTimeout(() => {
+            openPaywall('lockedPage');
+          }, 500);
+        }
+      }
+      
+      // 更新指示器
+      indicatorDots.forEach((dot, index) => {
+        const pageNum = index + 1;
+        dot.classList.toggle('active', pageNum === currentPage);
+        dot.classList.toggle('locked', pageNum >= 3 && !isVIP);
+      });
+      
+      // 隐藏滚动提示
+      scrollHint.style.opacity = scrollTop > 50 ? '0' : '1';
+    }
+    
+    // 跳转到指定页面
+    function goToPage(pageIndex) {
+      const targetPage = pageIndex + 1;
+      
+      // 如果是VIP锁定页面，直接跳转
+      if (targetPage >= 3 && !isVIP) {
+        openPaywall('indicatorClick');
+        return;
+      }
+      
+      pageContainer.scrollTo({
+        top: pageIndex * window.innerHeight,
+        behavior: 'smooth'
+      });
+    }
+    
+    // 更新UI状态
+    function updateUI() {
+      // 更新底部信息
+      const episodeInfo = document.getElementById('currentEpisodeInfo');
+      const progressFill = document.getElementById('progressFill');
+      episodeInfo.textContent = `Episode ${currentPage} / 5 - ${currentPage <= 2 ? 'FREE' : 'VIP'}`;
+      progressFill.style.width = `${(currentPage / 5) * 100}%`;
+      
+      // 更新页面锁定状态
+      document.querySelectorAll('.page').forEach((page, index) => {
+        const pageNum = index + 1;
+        page.classList.toggle('unlocked', pageNum >= 3 && isVIP);
+      });
+      
+      // 更新VIP指示器
+      document.getElementById('vipIndicator').classList.toggle('hidden', !isVIP);
+      
+      // 更新登录状态
+      document.getElementById('loginStatus').textContent = isLoggedIn ? loggedInProvider : 'Guest';
+    }
+    
+    // 更新选集弹窗状态
+    function updateEpisodeListState() {
+      const episodeItems = [
+        document.getElementById('episode3Item'),
+        document.getElementById('episode4Item'),
+        document.getElementById('episode5Item')
+      ];
+      
+      episodeItems.forEach((item, index) => {
+        const pageNum = index + 3;
+        item.classList.toggle('locked', !isVIP);
+        
+        if (!isVIP) {
+          item.onclick = () => {
+            closeModal('episodeModal');
+            setTimeout(() => openPaywall('episodeList'), 300);
+          };
+        } else {
+          item.onclick = () => switchToEpisode(pageNum);
+        }
+      });
+    }
+    
+    // 切换到指定集数
+    function switchToEpisode(pageNum) {
+      if (pageNum >= 3 && !isVIP) {
+        closeModal('episodeModal');
+        setTimeout(() => openPaywall('episodeList'), 300);
+        return;
+      }
+      
+      goToPage(pageNum - 1);
+      closeModal('episodeModal');
+    }
+    
+    // 点击锁定页面
+    function handleLockedPageClick() {
+      openPaywall('lockedPage');
+    }
+    
+    // 进度条点击
+    function handleProgressClick(event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const percentage = x / rect.width;
+      const targetPage = Math.max(1, Math.min(5, Math.round(percentage * 5)));
+      
+      if (targetPage >= 3 && !isVIP) {
+        openPaywall('progressBar');
+      } else {
+        goToPage(targetPage - 1);
+      }
+    }
+    
+    // 打开付费弹窗
+    function openPaywall(source) {
+      paywallSource = source;
+      updatePricing();
+      document.getElementById('paywallModal').classList.add('active');
+    }
+    
+    // 关闭付费弹窗（触发挽留）
+    function closePaywall() {
+      document.getElementById('paywallModal').classList.remove('active');
+      
+      // 显示挽留弹窗
+      setTimeout(() => {
+        showRetentionModal();
+      }, 300);
+    }
+    
+    // 显示挽留弹窗
+    function showRetentionModal() {
+      if (!isDiscounted) {
+        isDiscounted = true;
+        localStorage.setItem('isDiscounted', 'true');
+        document.getElementById('retentionModal').classList.add('active');
+        startCountdown();
+      } else {
+        // 已经优惠过，显示提示
+        showToast('Discount already applied!');
+      }
+    }
+    
+    // 关闭挽留弹窗
+    function closeRetention() {
+      document.getElementById('retentionModal').classList.remove('active');
+      clearInterval(countdownTimer);
+    }
+    
+    // 点击弹窗遮罩层关闭
+    function handleModalOverlayClick(event, modalId) {
+      if (event.target.id === modalId) {
+        if (modalId === 'paywallModal') {
+          closePaywall();
+        } else if (modalId === 'retentionModal') {
+          closeRetention();
+        } else {
+          closeModal(modalId);
+        }
+      }
+    }
+    
+    // 通用关闭弹窗
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+    
+    // 更新定价
+    function updatePricing() {
+      const price3Element = document.getElementById('price3');
+      const subscribeBtn = document.querySelector('#paywallModal .subscribe-btn');
+      
+      if (isDiscounted) {
+        price3Element.textContent = '$2.49 / 3 days (50% OFF)';
+        price3Element.classList.add('text-green-400');
+        subscribeBtn.textContent = 'Subscribe Now - $2.49';
+      } else {
+        price3Element.textContent = '$4.99 / 3 days';
+        price3Element.classList.remove('text-green-400');
+        subscribeBtn.textContent = 'Subscribe Now - $4.99';
+      }
+    }
+    
+    // 点击订阅按钮
+    function handleSubscribeClick() {
+      if (!isLoggedIn) {
+        // 需要先登录
+        closeModal('paywallModal');
+        setTimeout(() => {
+          document.getElementById('loginModal').classList.add('active');
+        }, 300);
+      } else {
+        processPayment(false);
+      }
+    }
+    
+    // 点击挽留弹窗订阅
+    function handleRetentionSubscribeClick() {
+      if (!isLoggedIn) {
+        closeModal('retentionModal');
+        setTimeout(() => {
+          document.getElementById('loginModal').classList.add('active');
+        }, 300);
+      } else {
+        processPayment(true);
+      }
+    }
+    
+    // 选择订阅档位
+    function selectPlan(element, days) {
+      selectedPlan = days;
+      
+      document.querySelectorAll('.plan-card').forEach(card => {
+        card.classList.remove('selected');
+        const radio = card.querySelector('.rounded-full');
+        radio.classList.remove('border-red-500');
+        radio.classList.add('border-white/30');
+        radio.innerHTML = '';
+      });
+      
+      element.classList.add('selected');
+      const radio = element.querySelector('.rounded-full');
+      radio.classList.remove('border-white/30');
+      radio.classList.add('border-red-500');
+      radio.innerHTML = '<div class="w-3 h-3 rounded-full bg-red-500"></div>';
+      
+      const prices = { 3: isDiscounted ? '$2.49' : '$4.99', 7: '$9.99', 14: '$16.99' };
+      document.querySelector('#paywallModal .subscribe-btn').textContent = 
+        `Subscribe Now - ${prices[days]}`;
+    }
+    
+    // 处理支付
+    function processPayment(isDiscount = false) {
+      let price, planName;
+      
+      if (isDiscount) {
+        price = '$2.49';
+        planName = '3-Day VIP Pass (50% OFF)';
+      } else {
+        const prices = { 3: '$4.99', 7: '$9.99', 14: '$16.99' };
+        const days = { 3: '3-Day', 7: '7-Day', 14: '14-Day' };
+        price = prices[selectedPlan];
+        planName = `${days[selectedPlan]} VIP Pass`;
+      }
+      
+      showToast(`Processing payment for ${price}...`);
+      clearInterval(countdownTimer);
+      
+      setTimeout(() => {
+        const expiryDays = isDiscount ? 3 : selectedPlan;
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + expiryDays);
+        
+        isVIP = true;
+        localStorage.setItem('isVIP', 'true');
+        localStorage.setItem('vipExpiry', expiry.toISOString());
+        localStorage.setItem('vipPlan', planName);
+        
+        closeRetention();
+        closeModal('paywallModal');
+        
+        document.getElementById('successPlan').textContent = planName;
+        document.getElementById('successExpiry').textContent = expiry.toLocaleDateString('en-US', { 
+          month: 'long', day: 'numeric', year: 'numeric' 
+        });
+        
+        document.getElementById('successModal').classList.add('active');
+        
+        updateUI();
+        updateEpisodeListState();
+      }, 2000);
+    }
+    
+    // 关闭成功弹窗
+    function closeSuccess() {
+      document.getElementById('successModal').classList.remove('active');
+    }
+    
+    // 社交登录
+    function socialLogin(provider) {
+      showToast(`Connecting to ${provider}...`);
+      
+      setTimeout(() => {
+        isLoggedIn = true;
+        loggedInProvider = provider;
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInProvider', provider);
+        
+        showToast(`${provider} login successful!`);
+        
+        // 关闭登录弹窗
+        closeModal('loginModal');
+        
+        // 更新UI
+        updateUI();
+        updateUserCenterUI();
+        
+        // 如果是订阅流程中触发的登录，提示用户继续订阅
+        showToast('Please continue with subscription');
+      }, 1500);
+    }
+    
+    // 退出登录
+    function logout() {
+      isLoggedIn = false;
+      loggedInProvider = '';
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('loggedInProvider');
+      
+      // 注意：VIP状态与登录状态分离，退出登录不影响VIP权益
+      // isVIP 和 vipExpiry 保留在 localStorage 中
+      
+      showToast('Signed out successfully');
+      closeUserCenter();
+      updateUI();
+    }
+    
+    // 更新用户中心UI
+    function updateUserCenterUI() {
+      const guestSection = document.getElementById('userCenterGuest');
+      const loggedInSection = document.getElementById('userCenterLoggedIn');
+      const vipStatusGuest = document.getElementById('vipStatusGuest');
+      const vipStatusActive = document.getElementById('vipStatusActive');
+      
+      if (isLoggedIn) {
+        guestSection.classList.add('hidden');
+        loggedInSection.classList.remove('hidden');
+        document.getElementById('loggedInUserName').textContent = 'User';
+        document.getElementById('loggedInUserProvider').textContent = `Signed in via ${loggedInProvider}`;
+      } else {
+        guestSection.classList.remove('hidden');
+        loggedInSection.classList.add('hidden');
+      }
+      
+      // VIP状态
+      if (isVIP) {
+        vipStatusGuest.classList.add('hidden');
+        vipStatusActive.classList.remove('hidden');
+        document.getElementById('vipExpiryText').textContent = 
+          `Expires: ${new Date(vipExpiry).toLocaleDateString('en-US', { 
+            month: 'long', day: 'numeric', year: 'numeric' 
+          })}`;
+      } else {
+        vipStatusGuest.classList.remove('hidden');
+        vipStatusActive.classList.add('hidden');
+      }
+    }
+    
+    // 打开用户中心
+    function openUserCenter() {
+      updateUserCenterUI();
+      document.getElementById('userCenterModal').classList.add('active');
+    }
+    
+    // 关闭用户中心
+    function closeUserCenter() {
+      document.getElementById('userCenterModal').classList.remove('active');
+    }
+    
+    // 打开选集弹窗
+    function openEpisodeList() {
+      updateEpisodeListState();
+      document.getElementById('episodeModal').classList.add('active');
+    }
+    
+    // 倒计时
+    function startCountdown() {
+      countdownSeconds = 300;
+      updateCountdown();
+      
+      if (countdownTimer) clearInterval(countdownTimer);
+      
+      countdownTimer = setInterval(() => {
+        countdownSeconds--;
+        updateCountdown();
+        
+        if (countdownSeconds <= 0) {
+          clearInterval(countdownTimer);
+        }
+      }, 1000);
+    }
+    
+    function updateCountdown() {
+      const minutes = Math.floor(countdownSeconds / 60);
+      const seconds = countdownSeconds % 60;
+      document.getElementById('countdown').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Toast提示
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+      toastText.textContent = message;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+    
+    // 键盘事件 - ESC关闭弹窗
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modals = ['paywallModal', 'retentionModal', 'userCenterModal', 'successModal', 'episodeModal', 'loginModal'];
+        modals.forEach(modalId => {
+          const modal = document.getElementById(modalId);
+          if (modal.classList.contains('active')) {
+            if (modalId === 'paywallModal') {
+              closePaywall();
+            } else if (modalId === 'retentionModal') {
+              closeRetention();
+            } else {
+              closeModal(modalId);
+            }
+          }
+        });
+      }
+    });
+    
+    // 重置状态（测试用）
+    // localStorage.clear();
+  </script>
+</body>
+</html>
