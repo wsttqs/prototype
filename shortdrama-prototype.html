@@ -1259,10 +1259,11 @@
       container.innerHTML = '';
       for (let i = 1; i <= TOTAL_EPISODES; i++) {
         const isFree = i <= FREE_EPISODES;
+        const isVipEp = !isFree;
         const isCurrent = i === currentPage;
-        const isLocked = !isFree && !isVIP;
+        const isLocked = isVipEp && !isVIP;
         const item = document.createElement('div');
-        item.className = `episode-grid-item ${isLocked ? 'vip' : 'free'} ${isCurrent ? 'current' : ''}`;
+        item.className = `episode-grid-item ${isVipEp ? 'vip' : 'free'} ${isCurrent ? 'current' : ''}`;
         item.textContent = i;
         item.onclick = isLocked ? () => handleVipEpisodeClick(i) : () => switchToEpisode(i);
         container.appendChild(item);
