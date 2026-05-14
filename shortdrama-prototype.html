@@ -761,26 +761,21 @@
       <div class="modal-handle"></div>
       
       <!-- 头部 -->
-      <div class="text-center mb-2.5">
+      <div class="text-center mb-2">
         <h2 class="font-display font-bold text-lg mb-0.5">Unlock Premium</h2>
         <p class="text-white/60 text-xs">Get unlimited access to all episodes</p>
       </div>
       
       <!-- 订阅档位 -->
-      <div class="space-y-2 mb-3">
+      <div class="space-y-2 mb-2.5">
         <div class="plan-card selected" onclick="selectPlan(this, 3)">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                <span class="text-white font-bold text-xs">3D</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-sm">3-Day Pass</span>
+                <span class="plan-tag popular">Popular</span>
               </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold text-sm">3-Day Pass</span>
-                  <span class="plan-tag popular">Popular</span>
-                </div>
-                <p class="text-white/40 text-xs mt-0.5">Full access for 3 days</p>
-              </div>
+              <p class="text-white/40 text-xs mt-0.5">Full access for 3 days</p>
             </div>
             <div class="text-right">
               <p class="price-tag text-xl" id="price3">$4.99</p>
@@ -791,56 +786,45 @@
         
         <div class="plan-card" onclick="selectPlan(this, 7)">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                <span class="text-white font-bold text-xs">7D</span>
-              </div>
-              <div>
-                <span class="font-semibold text-sm">Weekly Pass</span>
-                <p class="text-white/40 text-xs mt-0.5">Full access for 7 days</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="price-tag text-xl">$9.99</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="plan-card" onclick="selectPlan(this, 14)">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                <span class="text-white font-bold text-xs">14D</span>
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold text-sm">14-Day Pass</span>
-                  <span class="plan-tag best">Best Value</span>
-                </div>
-                <p class="text-white/40 text-xs mt-0.5">Full access for 14 days</p>
-              </div>
+            <div>
+              <span class="font-semibold text-sm">Weekly Pass</span>
+              <p class="text-white/40 text-xs mt-0.5">Full access for 7 days</p>
             </div>
             <div class="text-right">
               <p class="price-tag text-xl">$16.99</p>
             </div>
           </div>
         </div>
+        
+        <div class="plan-card" onclick="selectPlan(this, 14)">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-sm">14-Day Pass</span>
+                <span class="plan-tag best">Best Value</span>
+              </div>
+              <p class="text-white/40 text-xs mt-0.5">Full access for 14 days</p>
+            </div>
+            <div class="text-right">
+              <p class="price-tag text-xl">$26.99</p>
+            </div>
+          </div>
+        </div>
       </div>
       
       <!-- VIP权益 -->
-      <div class="bg-white/5 rounded-xl p-2.5 mb-3 border border-white/10">
-        <p class="text-xs font-semibold mb-1.5 text-white/80">VIP Benefits</p>
-        <div class="benefit-item py-1">
-          <div class="benefit-icon w-6 h-6">
-            <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="bg-white/5 rounded-xl p-2 mb-2.5 border border-white/10">
+        <div class="flex items-center gap-2 py-0.5">
+          <div class="benefit-icon w-5 h-5">
+            <svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
           <span class="text-xs text-white/70">Watch all episodes</span>
         </div>
-        <div class="benefit-item py-1">
-          <div class="benefit-icon w-6 h-6">
-            <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 py-0.5">
+          <div class="benefit-icon w-5 h-5">
+            <svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
@@ -849,17 +833,17 @@
       </div>
       
       <!-- 支付方式 -->
-      <div class="space-y-1.5 mb-3">
-        <p class="text-white/60 text-xs mb-1">Payment Method</p>
-        <div class="payment-method selected py-2" onclick="selectPaymentMethod(this, 'paypal')">
+      <div class="space-y-2 mb-2.5">
+        <p class="text-white/60 text-xs mb-0.5">Payment Method</p>
+        <div class="payment-method selected py-3" onclick="selectPaymentMethod(this, 'paypal')">
           <div class="radio"></div>
-          <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" class="h-4">
+          <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" class="h-5">
           <span class="text-sm font-medium">PayPal</span>
         </div>
-        <div class="payment-method py-2" onclick="selectPaymentMethod(this, 'card')">
+        <div class="payment-method py-3" onclick="selectPaymentMethod(this, 'card')">
           <div class="radio"></div>
           <div class="flex items-center gap-2">
-            <svg class="w-8 h-5" viewBox="0 0 48 32" fill="none">
+            <svg class="w-9 h-6" viewBox="0 0 48 32" fill="none">
               <rect width="48" height="32" rx="4" fill="#1A1F71"/>
               <path d="M19.2 21.4l1.4-8.4h2.2l-1.4 8.4h-2.2zM30.4 13c-.4-.2-1.1-.3-1.9-.3-2.1 0-3.6 1.1-3.6 2.6 0 1.1.9 1.8 1.6 2.1.7.4 1 .6 1 .9 0 .5-.6.7-1.1.7-1.1 0-1.7-.3-2.2-.5l-.3-.1-.3 1.8c.5.2 1.3.4 2.2.4 2.2 0 3.7-1.1 3.7-2.6 0-.9-.5-1.5-1.7-2.1-.7-.3-1.1-.6-1.1-.9 0-.3.3-.6 1-.6.9 0 1.5.2 2 .4l.2.1.3-1.7-.1.1zM35.6 13h-1.7c-.5 0-.9.1-1.2.6l-3.4 7.8h2.3l.5-1.3h2.7l.3 1.3h2l-1.5-8.4zM33.4 18.5l.9-2.4c0-.1.2-.5.2-.5h0l.4 2.4h-1.5v.5zM15.4 13l-2.1 5.4-.2-1.1c-.4-1.3-1.6-2.7-2.9-3.4l1.9 6.9h2.3l3.4-8.4h-2.4v.6z" fill="#fff"/>
               <path d="M12.1 13H8.2l0 .2c3.1.8 5.2 2.6 6 4.8l-.9-4.4c-.1-.5-.5-.6-1.2-.6z" fill="#F7B600"/>
@@ -911,15 +895,15 @@
             </svg>
           </div>
           <div class="text-center">
-            <p class="price-tag discounted text-3xl">$2.49</p>
-            <p class="text-green-400 text-xs">75% OFF</p>
+            <p class="price-tag discounted text-3xl">$2.99</p>
+            <p class="text-green-400 text-xs">70% OFF</p>
           </div>
         </div>
         <p class="text-white/60 text-sm mt-4">3-Day VIP Pass</p>
       </div>
       
       <button class="subscribe-btn mb-3" onclick="handleRetentionSubscribeClick()">
-        Claim Offer - $2.49
+        Claim Offer - $2.99
       </button>
       
       <button class="w-full text-center text-white/50 text-sm py-3" onclick="closeRetention()">
@@ -1346,8 +1330,8 @@
       const originalPriceElement = document.getElementById('originalPrice3');
       const subscribeBtn = document.querySelector('#paywallModal .subscribe-btn');
       if (isDiscounted) {
-        price3Element.innerHTML = '<span class="discounted">$2.49</span>';
-        subscribeBtn.textContent = 'Subscribe Now - $2.49';
+        price3Element.innerHTML = '<span class="discounted">$2.99</span>';
+        subscribeBtn.textContent = 'Subscribe Now - $2.99';
       } else {
         price3Element.textContent = '$4.99';
         subscribeBtn.textContent = 'Subscribe Now - $4.99';
@@ -1386,17 +1370,17 @@
       selectedPlan = days;
       document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
       element.classList.add('selected');
-      const prices = { 3: isDiscounted ? '$2.49' : '$4.99', 7: '$9.99', 14: '$16.99' };
+      const prices = { 3: isDiscounted ? '$2.99' : '$4.99', 7: '$16.99', 14: '$26.99' };
       document.querySelector('#paywallModal .subscribe-btn').textContent = `Subscribe Now - ${prices[days]}`;
     }
     
     function processPayment(isDiscount = false) {
       let price, planName;
       if (isDiscount) {
-        price = '$2.49';
+        price = '$2.99';
         planName = '3-Day VIP (50% OFF)';
       } else {
-        const prices = { 3: '$4.99', 7: '$9.99', 14: '$16.99' };
+        const prices = { 3: '$4.99', 7: '$16.99', 14: '$26.99' };
         const days = { 3: '3-Day', 7: '7-Day', 14: '14-Day' };
         price = prices[selectedPlan];
         planName = `${days[selectedPlan]} VIP`;
