@@ -171,16 +171,16 @@
                             <el-table-column prop="accId" label="Acc ID" width="170" sortable show-overflow-tooltip></el-table-column>
                             <el-table-column prop="campaignId" label="Campaign ID" width="170" sortable show-overflow-tooltip></el-table-column>
                             <el-table-column prop="adId" label="Ad ID" width="170" sortable show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="predictedCPC" label="预测CPC" width="110" sortable class-name="text-right">
+                            <el-table-column prop="predictedCPC" label="预测CPC" width="100" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedCPC.toFixed(3) }}</template>
                             </el-table-column>
-                            <el-table-column prop="predictedEPA" label="预测EPA" width="110" sortable class-name="text-right">
+                            <el-table-column prop="predictedEPA" label="预测EPA" width="100" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedEPA.toFixed(2) }}</template>
                             </el-table-column>
-                            <el-table-column prop="predictedCVR" label="预测CVR" width="110" sortable class-name="text-right">
+                            <el-table-column prop="predictedCVR" label="预测CVR" width="100" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedCVR.toFixed(2) }}</template>
                             </el-table-column>
-                            <el-table-column prop="predictedRPM" label="预测RPM" width="120" sortable class-name="text-right">
+                            <el-table-column prop="predictedRPM" label="预测RPM" width="100" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedRPM.toFixed(2) }}</template>
                             </el-table-column>
                             <el-table-column prop="confidence" label="可信度" width="100" sortable class-name="text-right">
@@ -188,12 +188,12 @@
                                     <span :class="getConfidenceClass(scope.row.confidence)">{{ scope.row.confidence.toFixed(1) }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="scoreStatus" label="评分状态" width="110" sortable>
+                            <el-table-column prop="scoreStatus" label="评分状态" width="100" sortable>
                                 <template #default="scope">
                                     <span :class="scope.row.scoreStatus === '待评分' ? 'status-tag status-tag-pending' : 'status-tag status-tag-scored'">{{ scope.row.scoreStatus }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作" width="140" fixed="right">
+                            <el-table-column label="操作" width="100" fixed="right">
                                 <template #default="scope"><span class="action-link" @click="handleScore(scope.row)">预测结果评分</span></template>
                             </el-table-column>
                         </el-table>
