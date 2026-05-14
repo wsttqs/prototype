@@ -35,9 +35,9 @@
         .content-area { flex: 1; padding: 16px 24px; overflow-y: auto; }
         .filter-card { background: #fff; border-radius: 4px; padding: 16px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
         .filter-row { display: flex; flex-wrap: nowrap; gap: 12px; align-items: flex-end; overflow-x: auto; }
-        .filter-item { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+        .filter-item { display: flex; flex-direction: column; gap: 6px; }
         .filter-label { font-size: 13px; color: #606266; font-weight: 500; }
-        .filter-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+        .filter-actions { display: flex; gap: 8px; margin-left: auto; }
         .table-card { background: #fff; border-radius: 4px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .table-title { font-size: 15px; font-weight: 600; color: #303133; }
@@ -164,36 +164,36 @@
                     <div class="table-card">
                         <div class="table-header"><span class="table-title">预测数据列表</span></div>
                         <el-table :data="tableData" stripe border style="width: 100%" max-height="calc(100vh - 320px)">
-                            <el-table-column prop="date" label="日期" width="105" sortable fixed></el-table-column>
-                            <el-table-column prop="group" label="Group" width="90" sortable></el-table-column>
-                            <el-table-column prop="owner" label="Owner" width="110" sortable></el-table-column>
-                            <el-table-column prop="targetObject" label="投放对象" width="95" sortable></el-table-column>
-                            <el-table-column prop="accId" label="Acc ID" width="160" sortable show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="campaignId" label="Campaign ID" width="175" sortable show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="adId" label="Ad ID" width="150" sortable show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="predictedCPC" label="预测CPC" width="95" sortable class-name="text-right">
+                            <el-table-column prop="date" label="日期" width="110" sortable fixed></el-table-column>
+                            <el-table-column prop="group" label="Group" width="100" sortable></el-table-column>
+                            <el-table-column prop="owner" label="Owner" width="130" sortable></el-table-column>
+                            <el-table-column prop="targetObject" label="投放对象" width="110" sortable></el-table-column>
+                            <el-table-column prop="accId" label="Acc ID" width="200" sortable show-overflow-tooltip></el-table-column>
+                            <el-table-column prop="campaignId" label="Campaign ID" width="220" sortable show-overflow-tooltip></el-table-column>
+                            <el-table-column prop="adId" label="Ad ID" width="200" sortable show-overflow-tooltip></el-table-column>
+                            <el-table-column prop="predictedCPC" label="预测CPC" width="110" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedCPC.toFixed(3) }}</template>
                             </el-table-column>
-                            <el-table-column prop="predictedEPA" label="预测EPA" width="90" sortable class-name="text-right">
+                            <el-table-column prop="predictedEPA" label="预测EPA" width="110" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedEPA.toFixed(2) }}</template>
                             </el-table-column>
-                            <el-table-column prop="predictedCVR" label="预测CVR" width="90" sortable class-name="text-right">
+                            <el-table-column prop="predictedCVR" label="预测CVR" width="110" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedCVR.toFixed(2) }}</template>
                             </el-table-column>
-                            <el-table-column prop="predictedRPM" label="预测RPM" width="100" sortable class-name="text-right">
+                            <el-table-column prop="predictedRPM" label="预测RPM" width="120" sortable class-name="text-right">
                                 <template #default="scope">{{ scope.row.predictedRPM.toFixed(2) }}</template>
                             </el-table-column>
-                            <el-table-column prop="confidence" label="可信度" width="80" sortable class-name="text-right">
+                            <el-table-column prop="confidence" label="可信度" width="100" sortable class-name="text-right">
                                 <template #default="scope">
                                     <span :class="getConfidenceClass(scope.row.confidence)">{{ scope.row.confidence.toFixed(1) }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="scoreStatus" label="评分状态" width="90" sortable>
+                            <el-table-column prop="scoreStatus" label="评分状态" width="110" sortable>
                                 <template #default="scope">
                                     <span :class="scope.row.scoreStatus === '待评分' ? 'status-tag status-tag-pending' : 'status-tag status-tag-scored'">{{ scope.row.scoreStatus }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作" width="120" fixed="right">
+                            <el-table-column label="操作" width="140" fixed="right">
                                 <template #default="scope"><span class="action-link" @click="handleScore(scope.row)">预测结果评分</span></template>
                             </el-table-column>
                         </el-table>
