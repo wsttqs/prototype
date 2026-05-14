@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广告数据预测 | Search Arb Platform</title>
+    <!-- Element Plus CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Element Plus -->
+    <script src="https://unpkg.com/element-plus"></script>
+    <!-- Element Plus Icons -->
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #303133;
+        }
+        
+        .app-container {
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .page-header {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #303133;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .page-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #409EFF;
+            border-radius: 2px;
+        }
+        
+        .filter-container {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+        
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-label {
+            font-size: 14px;
+            color: #606266;
+            font-weight: 500;
+        }
+        
+        .table-container {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        /* 表格样式优化 */
+        .el-table {
+            font-size: 13px;
+        }
+        
+        .el-table th.el-table__cell {
+            background-color: #f5f7fa !important;
+            font-weight: 600;
+            color: #303133;
+        }
+        
+        .el-table .cell {
+            padding: 8px 10px;
+        }
+        
+        /* 数值列右对齐 */
+        .text-right .cell {
+            text-align: right;
+        }
+        
+        /* 可信度颜色指示 */
+        .confidence-high {
+            color: #67C23A;
+            font-weight: 600;
+        }
+        
+        .confidence-medium {
+            color: #E6A23C;
+            font-weight: 600;
+        }
+        
+        .confidence-low {
+            color: #F56C6C;
+            font-weight: 600;
+        }
+        
+        /* 分页样式 */
+        .pagination-container {
+            display: flex;
+            justify-content: flex-end;
+            padding: 16px 0 0 0;
+        }
+        
+        /* 统计信息 */
+        .stats-row {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: #f5f7fa;
+            border-radius: 4px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stat-label {
+            color: #909399;
+            font-size: 14px;
+        }
+        
+        .stat-value {
+            color: #303133;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        /* 响应式优化 */
+        @media screen and (max-width: 1400px) {
+            .filter-row {
+                gap: 12px;
+            }
+            
+            .filter-item {
+                min-width: 140px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <h1 class="page-title">广告数据预测</h1>
+            </div>
+            
+            <!-- 筛选区域 -->
+            <div class="filter-container">
+                <div class="filter-row">
+                    <!-- 日期范围 -->
+                    <div class="filter-item">
+                        <span class="filter-label">日期范围</span>
+                        <el-date-picker
+                            v-model="filters.dateRange"
+                            type="daterange"
+                            range-separator="至"
+                            start-placeholder="开始日期"
+                            end-placeholder="结束日期"
+                            :shortcuts="dateShortcuts"
+                            style="width: 240px;"
+                        ></el-date-picker>
+                    </div>
+                    
+                    <!-- 国家 -->
+                    <div class="filter-item">
+                        <span class="filter-label">国家</span>
+                        <el-select
+                            v-model="filters.country"
+                            multiple
+                            collapse-tags
+                            collapse-tags-tooltip
+                            placeholder="请选择"
+                            style="width: 160px;"
+                            clearable
+                        >
+                            <el-option label="merge" value="merge"></el-option>
+                            <el-option label="split" value="split"></el-option>
+                            <el-option label="US" value="US"></el-option>
+                            <el-option label="CA" value="CA"></el-option>
+                            <el-option label="UK" value="UK"></el-option>
+                            <el-option label="JP" value="JP"></el-option>
+                            <el-option label="DE" value="DE"></el-option>
+                        </el-select>
+                    </div>
+                    
+                    <!-- 平台 -->
+                    <div class="filter-item">
+                        <span class="filter-label">平台</span>
+                        <el-select
+                            v-model="filters.platform"
+                            multiple
+                            collapse-tags
+                            collapse-tags-tooltip
+                            placeholder="请选择"
+                            style="width: 140px;"
+                            clearable
+                        >
+                            <el-option label="iOS" value="iOS"></el-option>
+                            <el-option label="Android" value="Android"></el-option>
+                        </el-select>
+                    </div>
+                    
+                    <!-- 投放对象 (新增) -->
+                    <div class="filter-item">
+                        <span class="filter-label">投放对象</span>
+                        <el-select
+                            v-model="filters.targetObject"
+                            multiple
+                            collapse-tags
+                            collapse-tags-tooltip
+                            placeholder="请选择"
+                            style="width: 160px;"
+                            clearable
+                            filterable
+                        >
+                            <el-option label="4518890" value="4518890"></el-option>
+                            <el-option label="4492086" value="4492086"></el-option>
+                            <el-option label="4520012" value="4520012"></el-option>
+                            <el-option label="4487653" value="4487653"></el-option>
+                            <el-option label="4532108" value="4532108"></el-option>
+                        </el-select>
+                    </div>
+                    
+                    <!-- Acc ID -->
+                    <div class="filter-item">
+                        <span class="filter-label">Acc ID</span>
+                        <el-select
+                            v-model="filters.accId"
+                            multiple
+                            collapse-tags
+                            collapse-tags-tooltip
+                            placeholder="请选择"
+                            style="width: 160px;"
+                            clearable
+                            filterable
+                        >
+                            <el-option label="ACC001" value="ACC001"></el-option>
+                            <el-option label="ACC002" value="ACC002"></el-option>
+                            <el-option label="ACC003" value="ACC003"></el-option>
+                            <el-option label="ACC004" value="ACC004"></el-option>
+                        </el-select>
+                    </div>
+                    
+                    <!-- 应用 -->
+                    <div class="filter-item">
+                        <span class="filter-label">应用</span>
+                        <el-select
+                            v-model="filters.app"
+                            multiple
+                            collapse-tags
+                            collapse-tags-tooltip
+                            placeholder="请选择"
+                            style="width: 160px;"
+                            clearable
+                            filterable
+                        >
+                            <el-option label="App A" value="app_a"></el-option>
+                            <el-option label="App B" value="app_b"></el-option>
+                            <el-option label="App C" value="app_c"></el-option>
+                        </el-select>
+                    </div>
+                    
+                    <!-- 可信度 (新增，单选) -->
+                    <div class="filter-item">
+                        <span class="filter-label">可信度</span>
+                        <el-select
+                            v-model="filters.confidence"
+                            placeholder="请选择"
+                            style="width: 120px;"
+                            clearable
+                        >
+                            <el-option label="大于 0.2" value="0.2"></el-option>
+                            <el-option label="大于 0.4" value="0.4"></el-option>
+                            <el-option label="大于 0.6" value="0.6"></el-option>
+                            <el-option label="大于 0.8" value="0.8"></el-option>
+                        </el-select>
+                    </div>
+                    
+                    <!-- 查询按钮 -->
+                    <div class="filter-item">
+                        <el-button type="primary" @click="handleSearch">
+                            <el-icon><search /></el-icon>
+                            查询
+                        </el-button>
+                        <el-button @click="handleReset">
+                            <el-icon><refresh /></el-icon>
+                            重置
+                        </el-button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 表格区域 -->
+            <div class="table-container">
+                <!-- 统计信息 -->
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-label">总数据量:</span>
+                        <span class="stat-value">{{ tableData.length }} 条</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">预测总RPM:</span>
+                        <span class="stat-value">${{ totalPredictedRPM }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">平均可信度:</span>
+                        <span class="stat-value">{{ avgConfidence }}</span>
+                    </div>
+                </div>
+                
+                <!-- 表格头部 -->
+                <div class="table-header">
+                    <span class="table-title">预测数据列表</span>
+                    <div class="table-actions">
+                        <el-button type="success" @click="handleExport">
+                            <el-icon><download /></el-icon>
+                            导出
+                        </el-button>
+                    </div>
+                </div>
+                
+                <!-- 数据表格 -->
+                <el-table
+                    :data="tableData"
+                    stripe
+                    border
+                    style="width: 100%"
+                    :default-sort="{ prop: 'date', order: 'descending' }"
+                    max-height="500"
+                >
+                    <el-table-column prop="date" label="日期" width="110" sortable fixed></el-table-column>
+                    <el-table-column prop="country" label="国家" width="80" sortable></el-table-column>
+                    <el-table-column prop="platform" label="平台" width="80" sortable></el-table-column>
+                    <el-table-column prop="targetObject" label="投放对象" width="100" sortable></el-table-column>
+                    <el-table-column prop="accId" label="Acc ID" width="100" sortable></el-table-column>
+                    <el-table-column prop="app" label="应用" min-width="120" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="impressions" label="展示量" width="100" sortable class-name="text-right">
+                        <template #default="scope">
+                            {{ formatNumber(scope.row.impressions) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="clicks" label="点击量" width="90" sortable class-name="text-right">
+                        <template #default="scope">
+                            {{ formatNumber(scope.row.clicks) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="revenue" label="收入($)" width="100" sortable class-name="text-right">
+                        <template #default="scope">
+                            {{ formatMoney(scope.row.revenue) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="predictedRPM" label="预测RPM" width="100" sortable class-name="text-right">
+                        <template #default="scope">
+                            ${{ scope.row.predictedRPM.toFixed(2) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="confidence" label="可信度" width="90" sortable class-name="text-right">
+                        <template #default="scope">
+                            <span :class="getConfidenceClass(scope.row.confidence)">
+                                {{ scope.row.confidence.toFixed(1) }}
+                            </span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="actualRPM" label="实际RPM" width="100" sortable class-name="text-right">
+                        <template #default="scope">
+                            ${{ scope.row.actualRPM.toFixed(2) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="deviation" label="偏差率" width="90" sortable class-name="text-right">
+                        <template #default="scope">
+                            <span :style="{ color: scope.row.deviation > 10 ? '#F56C6C' : '#67C23A' }">
+                                {{ scope.row.deviation > 0 ? '+' : '' }}{{ scope.row.deviation.toFixed(1) }}%
+                            </span>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                
+                <!-- 分页 -->
+                <div class="pagination-container">
+                    <el-pagination
+                        v-model:current-page="pagination.currentPage"
+                        v-model:page-size="pagination.pageSize"
+                        :page-sizes="[10, 20, 50, 100]"
+                        :total="pagination.total"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                    ></el-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+        const { ElMessage } = ElementPlus;
+        
+        const app = createApp({
+            setup() {
+                // 筛选条件
+                const filters = ref({
+                    dateRange: [],
+                    country: [],
+                    platform: [],
+                    targetObject: [],
+                    accId: [],
+                    app: [],
+                    confidence: null
+                });
+                
+                // 日期快捷选项
+                const dateShortcuts = [
+                    {
+                        text: '最近一周',
+                        value: () => {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            return [start, end];
+                        }
+                    },
+                    {
+                        text: '最近一个月',
+                        value: () => {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            return [start, end];
+                        }
+                    },
+                    {
+                        text: '最近三个月',
+                        value: () => {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            return [start, end];
+                        }
+                    }
+                ];
+                
+                // 分页
+                const pagination = ref({
+                    currentPage: 1,
+                    pageSize: 20,
+                    total: 100
+                });
+                
+                // 模拟表格数据
+                const tableData = ref([
+                    { date: '2024-01-15', country: 'US', platform: 'iOS', targetObject: '4518890', accId: 'ACC001', app: 'App A', impressions: 125000, clicks: 3750, revenue: 1875.50, predictedRPM: 15.20, confidence: 0.9, actualRPM: 15.00, deviation: 1.3 },
+                    { date: '2024-01-15', country: 'US', platform: 'Android', targetObject: '4492086', accId: 'ACC002', app: 'App B', impressions: 98000, clicks: 2940, revenue: 1176.00, predictedRPM: 12.50, confidence: 0.8, actualRPM: 12.00, deviation: 4.2 },
+                    { date: '2024-01-15', country: 'CA', platform: 'iOS', targetObject: '4520012', accId: 'ACC001', app: 'App A', impressions: 45000, clicks: 1350, revenue: 540.00, predictedRPM: 11.80, confidence: 0.7, actualRPM: 12.00, deviation: -1.7 },
+                    { date: '2024-01-14', country: 'UK', platform: 'iOS', targetObject: '4487653', accId: 'ACC003', app: 'App C', impressions: 62000, clicks: 1860, revenue: 930.00, predictedRPM: 14.50, confidence: 0.6, actualRPM: 15.00, deviation: -3.3 },
+                    { date: '2024-01-14', country: 'US', platform: 'iOS', targetObject: '4532108', accId: 'ACC004', app: 'App B', impressions: 88000, clicks: 2640, revenue: 1408.00, predictedRPM: 16.00, confidence: 0.9, actualRPM: 16.00, deviation: 0.0 },
+                    { date: '2024-01-14', country: 'JP', platform: 'Android', targetObject: '4518890', accId: 'ACC002', app: 'App A', impressions: 55000, clicks: 1650, revenue: 660.00, predictedRPM: 10.50, confidence: 0.5, actualRPM: 12.00, deviation: -12.5 },
+                    { date: '2024-01-13', country: 'DE', platform: 'iOS', targetObject: '4492086', accId: 'ACC001', app: 'App C', impressions: 38000, clicks: 1140, revenue: 456.00, predictedRPM: 12.00, confidence: 0.4, actualRPM: 12.00, deviation: 0.0 },
+                    { date: '2024-01-13', country: 'US', platform: 'Android', targetObject: '4520012', accId: 'ACC003', app: 'App A', impressions: 72000, clicks: 2160, revenue: 1080.00, predictedRPM: 13.80, confidence: 0.8, actualRPM: 15.00, deviation: -8.0 },
+                    { date: '2024-01-13', country: 'CA', platform: 'Android', targetObject: '4487653', accId: 'ACC004', app: 'App B', impressions: 28000, clicks: 840, revenue: 280.00, predictedRPM: 9.50, confidence: 0.3, actualRPM: 10.00, deviation: -5.0 },
+                    { date: '2024-01-12', country: 'UK', platform: 'Android', targetObject: '4532108', accId: 'ACC002', app: 'App C', impressions: 42000, clicks: 1260, revenue: 630.00, predictedRPM: 14.20, confidence: 0.7, actualRPM: 15.00, deviation: -5.3 },
+                    { date: '2024-01-12', country: 'US', platform: 'iOS', targetObject: '4518890', accId: 'ACC001', app: 'App A', impressions: 135000, clicks: 4050, revenue: 2025.00, predictedRPM: 15.50, confidence: 0.9, actualRPM: 15.00, deviation: 3.3 },
+                    { date: '2024-01-12', country: 'JP', platform: 'iOS', targetObject: '4492086', accId: 'ACC003', app: 'App B', impressions: 48000, clicks: 1440, revenue: 720.00, predictedRPM: 13.00, confidence: 0.6, actualRPM: 15.00, deviation: -13.3 },
+                    { date: '2024-01-11', country: 'DE', platform: 'Android', targetObject: '4520012', accId: 'ACC004', app: 'App A', impressions: 32000, clicks: 960, revenue: 384.00, predictedRPM: 11.20, confidence: 0.5, actualRPM: 12.00, deviation: -6.7 },
+                    { date: '2024-01-11', country: 'US', platform: 'iOS', targetObject: '4487653', accId: 'ACC002', app: 'App C', impressions: 95000, clicks: 2850, revenue: 1425.00, predictedRPM: 15.80, confidence: 0.8, actualRPM: 15.00, deviation: 5.3 },
+                    { date: '2024-01-11', country: 'CA', platform: 'iOS', targetObject: '4532108', accId: 'ACC001', app: 'App B', impressions: 52000, clicks: 1560, revenue: 624.00, predictedRPM: 12.50, confidence: 0.7, actualRPM: 12.00, deviation: 4.2 },
+                    { date: '2024-01-10', country: 'UK', platform: 'iOS', targetObject: '4518890', accId: 'ACC003', app: 'App A', impressions: 58000, clicks: 1740, revenue: 870.00, predictedRPM: 14.00, confidence: 0.6, actualRPM: 15.00, deviation: -6.7 },
+                    { date: '2024-01-10', country: 'US', platform: 'Android', targetObject: '4492086', accId: 'ACC004', app: 'App C', impressions: 78000, clicks: 2340, revenue: 1170.00, predictedRPM: 13.50, confidence: 0.8, actualRPM: 15.00, deviation: -10.0 },
+                    { date: '2024-01-10', country: 'JP', platform: 'Android', targetObject: '4520012', accId: 'ACC002', app: 'App B', impressions: 35000, clicks: 1050, revenue: 420.00, predictedRPM: 10.80, confidence: 0.4, actualRPM: 12.00, deviation: -10.0 },
+                    { date: '2024-01-09', country: 'DE', platform: 'iOS', targetObject: '4487653', accId: 'ACC001', app: 'App A', impressions: 41000, clicks: 1230, revenue: 492.00, predictedRPM: 12.80, confidence: 0.5, actualRPM: 12.00, deviation: 6.7 },
+                    { date: '2024-01-09', country: 'US', platform: 'iOS', targetObject: '4532108', accId: 'ACC003', app: 'App C', impressions: 112000, clicks: 3360, revenue: 1680.00, predictedRPM: 15.00, confidence: 0.9, actualRPM: 15.00, deviation: 0.0 }
+                ]);
+                
+                // 计算属性
+                const totalPredictedRPM = computed(() => {
+                    return tableData.value.reduce((sum, row) => sum + row.predictedRPM, 0).toFixed(2);
+                });
+                
+                const avgConfidence = computed(() => {
+                    const avg = tableData.value.reduce((sum, row) => sum + row.confidence, 0) / tableData.value.length;
+                    return avg.toFixed(1);
+                });
+                
+                // 方法
+                const formatNumber = (num) => {
+                    return num.toLocaleString();
+                };
+                
+                const formatMoney = (num) => {
+                    return num.toFixed(2);
+                };
+                
+                const getConfidenceClass = (confidence) => {
+                    if (confidence >= 0.7) return 'confidence-high';
+                    if (confidence >= 0.4) return 'confidence-medium';
+                    return 'confidence-low';
+                };
+                
+                const handleSearch = () => {
+                    ElMessage.success('查询成功');
+                };
+                
+                const handleReset = () => {
+                    filters.value = {
+                        dateRange: [],
+                        country: [],
+                        platform: [],
+                        targetObject: [],
+                        accId: [],
+                        app: [],
+                        confidence: null
+                    };
+                    ElMessage.info('已重置筛选条件');
+                };
+                
+                const handleExport = () => {
+                    ElMessage.success('导出成功');
+                };
+                
+                const handleSizeChange = (val) => {
+                    pagination.value.pageSize = val;
+                };
+                
+                const handleCurrentChange = (val) => {
+                    pagination.value.currentPage = val;
+                };
+                
+                return {
+                    filters,
+                    dateShortcuts,
+                    pagination,
+                    tableData,
+                    totalPredictedRPM,
+                    avgConfidence,
+                    formatNumber,
+                    formatMoney,
+                    getConfidenceClass,
+                    handleSearch,
+                    handleReset,
+                    handleExport,
+                    handleSizeChange,
+                    handleCurrentChange
+                };
+            }
+        });
+        
+        // 注册所有图标
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>
