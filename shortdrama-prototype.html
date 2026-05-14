@@ -757,17 +757,17 @@
   
   <!-- 支付弹窗 - 高端版 -->
   <div id="paywallModal" class="modal-overlay" onclick="handleModalOverlayClick(event, 'paywallModal')">
-    <div class="modal-content p-5" onclick="event.stopPropagation()">
+    <div class="modal-content p-4" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       
       <!-- 头部 -->
-      <div class="text-center mb-3">
+      <div class="text-center mb-2.5">
         <h2 class="font-display font-bold text-lg mb-0.5">Unlock Premium</h2>
-        <p class="text-white/60 text-xs">Get unlimited access to all 72 episodes</p>
+        <p class="text-white/60 text-xs">Get unlimited access to all episodes</p>
       </div>
       
       <!-- 订阅档位 -->
-      <div class="space-y-2 mb-4">
+      <div class="space-y-2 mb-3">
         <div class="plan-card selected" onclick="selectPlan(this, 3)">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
@@ -784,6 +784,7 @@
             </div>
             <div class="text-right">
               <p class="price-tag text-xl" id="price3">$4.99</p>
+              <p class="text-white/30 text-xs line-through" id="originalPrice3">$9.99</p>
             </div>
           </div>
         </div>
@@ -827,17 +828,17 @@
       </div>
       
       <!-- VIP权益 -->
-      <div class="bg-white/5 rounded-xl p-3 mb-4 border border-white/10">
-        <p class="text-xs font-semibold mb-2 text-white/80">VIP Benefits</p>
-        <div class="benefit-item py-1.5">
+      <div class="bg-white/5 rounded-xl p-2.5 mb-3 border border-white/10">
+        <p class="text-xs font-semibold mb-1.5 text-white/80">VIP Benefits</p>
+        <div class="benefit-item py-1">
           <div class="benefit-icon w-6 h-6">
             <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <span class="text-xs text-white/70">Watch all 72 episodes</span>
+          <span class="text-xs text-white/70">Watch all episodes</span>
         </div>
-        <div class="benefit-item py-1.5">
+        <div class="benefit-item py-1">
           <div class="benefit-icon w-6 h-6">
             <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -848,14 +849,14 @@
       </div>
       
       <!-- 支付方式 -->
-      <div class="space-y-1.5 mb-4">
-        <p class="text-white/60 text-xs mb-1.5">Payment Method</p>
-        <div class="payment-method selected py-2.5" onclick="selectPaymentMethod(this, 'paypal')">
+      <div class="space-y-1.5 mb-3">
+        <p class="text-white/60 text-xs mb-1">Payment Method</p>
+        <div class="payment-method selected py-2" onclick="selectPaymentMethod(this, 'paypal')">
           <div class="radio"></div>
           <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" class="h-4">
           <span class="text-sm font-medium">PayPal</span>
         </div>
-        <div class="payment-method py-2.5" onclick="selectPaymentMethod(this, 'card')">
+        <div class="payment-method py-2" onclick="selectPaymentMethod(this, 'card')">
           <div class="radio"></div>
           <div class="flex items-center gap-2">
             <svg class="w-8 h-5" viewBox="0 0 48 32" fill="none">
@@ -868,7 +869,7 @@
         </div>
       </div>
       
-      <button class="subscribe-btn mb-3 py-3.5" onclick="handleSubscribeClick()">
+      <button class="subscribe-btn mb-2 py-3" onclick="handleSubscribeClick()">
         Subscribe Now - $4.99
       </button>
       
@@ -901,7 +902,7 @@
       <div class="bg-white/10 rounded-2xl p-5 mb-5 text-center border border-white/10">
         <div class="flex items-center justify-center gap-6">
           <div class="text-center">
-            <p class="text-white/40 text-lg line-through">$4.99</p>
+            <p class="text-white/40 text-lg line-through">$9.99</p>
             <p class="text-white/40 text-xs">Original</p>
           </div>
           <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
@@ -911,7 +912,7 @@
           </div>
           <div class="text-center">
             <p class="price-tag discounted text-3xl">$2.49</p>
-            <p class="text-green-400 text-xs">50% OFF</p>
+            <p class="text-green-400 text-xs">75% OFF</p>
           </div>
         </div>
         <p class="text-white/60 text-sm mt-4">3-Day VIP Pass</p>
@@ -1324,6 +1325,8 @@
     function closeRetention() {
       document.getElementById('retentionModal').classList.remove('active');
       clearInterval(countdownTimer);
+      // 用户查看挽留弹窗后，标记为已折扣
+      isDiscounted = true;
     }
     
     function handleModalOverlayClick(event, modalId) {
@@ -1340,14 +1343,17 @@
     
     function updatePricing() {
       const price3Element = document.getElementById('price3');
+      const originalPriceElement = document.getElementById('originalPrice3');
       const subscribeBtn = document.querySelector('#paywallModal .subscribe-btn');
       if (isDiscounted) {
-        price3Element.innerHTML = '<span class="discounted">$2.49</span> <span class="text-white/40 line-through text-base">$4.99</span>';
+        price3Element.innerHTML = '<span class="discounted">$2.49</span>';
         subscribeBtn.textContent = 'Subscribe Now - $2.49';
       } else {
         price3Element.textContent = '$4.99';
         subscribeBtn.textContent = 'Subscribe Now - $4.99';
       }
+      // 划线价始终显示原始价 $9.99
+      originalPriceElement.textContent = '$9.99';
     }
     
     function selectPaymentMethod(element, method) {
