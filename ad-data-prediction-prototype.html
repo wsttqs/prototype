@@ -253,15 +253,24 @@
         
         .el-table .cell {
             padding: 6px 8px;
+            white-space: nowrap;
         }
         
         .el-table td.el-table__cell {
             padding: 8px 0;
         }
         
+        /* 排序图标与列名同行：确保表头cell不换行 */
+        .el-table .el-table__header-wrapper .cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
         /* 数值列右对齐 */
         .text-right .cell {
             text-align: right;
+            justify-content: flex-end;
         }
         
         /* 可信度颜色 */
@@ -275,18 +284,23 @@
             font-weight: 600;
         }
         
-        .confidence-low {
-            color: #ff4d4f;
-            font-weight: 600;
+        /* 评分状态标签 */
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            line-height: 1.6;
         }
         
-        /* 评分状态 */
-        .status-pending {
-            color: #ff4d4f;
+        .status-tag-pending {
+            background-color: #FEF0F0;
+            color: #F56C6C;
         }
         
-        .status-scored {
-            color: #52c41a;
+        .status-tag-scored {
+            background-color: #f0f9eb;
+            color: #67C23A;
         }
         
         /* 操作链接 */
@@ -496,40 +510,58 @@
                                 </el-select>
                             </div>
                             
-                            <!-- Acc ID -->
+                            <!-- Acc ID（多选） -->
                             <div class="filter-item">
                                 <span class="filter-label">Acc ID</span>
-                                <el-input
+                                <el-select
                                     v-model="filters.accId"
-                                    placeholder="搜索"
-                                    style="width: 160px;"
+                                    multiple
+                                    collapse-tags
+                                    collapse-tags-tooltip
+                                    placeholder="请选择"
+                                    style="width: 180px;"
                                     clearable
-                                ></el-input>
+                                    filterable
+                                >
+                                    <el-option v-for="a in accIdOptions" :key="a" :label="a" :value="a"></el-option>
+                                </el-select>
                             </div>
                             
-                            <!-- Campaign ID -->
+                            <!-- Campaign ID（多选） -->
                             <div class="filter-item">
                                 <span class="filter-label">Campaign ID</span>
-                                <el-input
+                                <el-select
                                     v-model="filters.campaignId"
-                                    placeholder="搜索"
-                                    style="width: 180px;"
+                                    multiple
+                                    collapse-tags
+                                    collapse-tags-tooltip
+                                    placeholder="请选择"
+                                    style="width: 200px;"
                                     clearable
-                                ></el-input>
+                                    filterable
+                                >
+                                    <el-option v-for="c in campaignIdOptions" :key="c" :label="c" :value="c"></el-option>
+                                </el-select>
                             </div>
                             
-                            <!-- Ad ID -->
+                            <!-- Ad ID（多选） -->
                             <div class="filter-item">
                                 <span class="filter-label">Ad ID</span>
-                                <el-input
+                                <el-select
                                     v-model="filters.adId"
-                                    placeholder="搜索"
-                                    style="width: 180px;"
+                                    multiple
+                                    collapse-tags
+                                    collapse-tags-tooltip
+                                    placeholder="请选择"
+                                    style="width: 200px;"
                                     clearable
-                                ></el-input>
+                                    filterable
+                                >
+                                    <el-option v-for="d in adIdOptions" :key="d" :label="d" :value="d"></el-option>
+                                </el-select>
                             </div>
                             
-                            <!-- 可信度（单选） -->
+                            <!-- 可信度（单选，从>0.4开始） -->
                             <div class="filter-item">
                                 <span class="filter-label">可信度</span>
                                 <el-select
@@ -538,20 +570,18 @@
                                     style="width: 110px;"
                                     clearable
                                 >
-                                    <el-option label="大于 0.2" value="0.2"></el-option>
                                     <el-option label="大于 0.4" value="0.4"></el-option>
                                     <el-option label="大于 0.6" value="0.6"></el-option>
                                     <el-option label="大于 0.8" value="0.8"></el-option>
                                 </el-select>
                             </div>
                             
-                            <!-- 查询按钮 -->
+                            <!-- 查询按钮（无重置按钮） -->
                             <div class="filter-actions">
                                 <el-button type="primary" @click="handleSearch">
                                     <el-icon><search /></el-icon>
                                     查询
                                 </el-button>
-                                <el-button @click="handleReset">重置</el-button>
                             </div>
                         </div>
                     </div>
@@ -569,14 +599,14 @@
                             style="width: 100%"
                             max-height="calc(100vh - 320px)"
                         >
-                            <el-table-column prop="date" label="日期" width="110" fixed></el-table-column>
-                            <el-table-column prop="group" label="Group" width="100"></el-table-column>
-                            <el-table-column prop="owner" label="Owner" width="120"></el-table-column>
-                            <el-table-column prop="targetObject" label="投放对象" width="100"></el-table-column>
-                            <el-table-column prop="accId" label="Acc ID" width="160" show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="campaignId" label="Campaign ID" width="180" show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="adId" label="Ad ID" width="180" show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="predictedCPC" label="预测CPC" width="90" sortable class-name="text-right">
+                            <el-table-column prop="date" label="日期" width="110" sortable fixed></el-table-column>
+                            <el-table-column prop="group" label="Group" width="100" sortable></el-table-column>
+                            <el-table-column prop="owner" label="Owner" width="120" sortable></el-table-column>
+                            <el-table-column prop="targetObject" label="投放对象" width="100" sortable></el-table-column>
+                            <el-table-column prop="accId" label="Acc ID" width="170" sortable show-overflow-tooltip></el-table-column>
+                            <el-table-column prop="campaignId" label="Campaign ID" width="190" sortable show-overflow-tooltip></el-table-column>
+                            <el-table-column prop="adId" label="Ad ID" width="190" sortable show-overflow-tooltip></el-table-column>
+                            <el-table-column prop="predictedCPC" label="预测CPC" width="95" sortable class-name="text-right">
                                 <template #default="scope">
                                     {{ scope.row.predictedCPC.toFixed(3) }}
                                 </template>
@@ -603,9 +633,9 @@
                                     </span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="scoreStatus" label="评分状态" width="90">
+                            <el-table-column prop="scoreStatus" label="评分状态" width="90" sortable>
                                 <template #default="scope">
-                                    <span :class="scope.row.scoreStatus === '待评分' ? 'status-pending' : 'status-scored'">
+                                    <span :class="scope.row.scoreStatus === '待评分' ? 'status-tag status-tag-pending' : 'status-tag status-tag-scored'">
                                         {{ scope.row.scoreStatus }}
                                     </span>
                                 </template>
@@ -635,7 +665,7 @@
     </div>
 
     <script>
-        const { createApp, ref, computed } = Vue;
+        const { createApp, ref } = Vue;
         const { ElMessage } = ElementPlus;
         
         const app = createApp({
@@ -647,9 +677,9 @@
                     group: [],
                     owner: [],
                     targetObject: [],
-                    accId: '',
-                    campaignId: '',
-                    adId: '',
+                    accId: [],
+                    campaignId: [],
+                    adId: [],
                     confidence: null
                 });
                 
@@ -657,6 +687,9 @@
                 const groupOptions = ['9组', '8组-灵动', '关东组', '7组', '6组'];
                 const ownerOptions = ['hunter', 'yunduole0409', 'Belle0409', 'harian0409', 'Shim-0409', 'may0408', 'Yudy0408', 'lejia0408'];
                 const targetObjectOptions = ['4518890', '4492086', '4520012', '4487653', '4532108'];
+                const accIdOptions = ['3798994623741175', '461355412990159', '556345850196020', '567890123456789', '678901234567890', '789012345678901', '890123456789012', '901234567890123', '123456789012345', '234567890123456', '345678901234567', '456789012345678'];
+                const campaignIdOptions = ['120243330771700297', '1202418820200570', '1202413365600129', '1202418820200571', '1202413365600130', '1202418820200572', '1202413365600131', '1202418820200573', '1202413365600132', '1202418820200574', '1202413365600133', '1202418820200575', '1202413365600134', '1202418820200576', '1202413365600135', '1202418820200577', '1202413365600136', '1202418820200578', '1202413365600137', '1202418820200579'];
+                const adIdOptions = ['12024331771760297', '-', '12024400000000001', '12024400000000002', '12024400000000003'];
                 
                 // 分页
                 const pagination = ref({
@@ -665,23 +698,23 @@
                     total: 2428
                 });
                 
-                // 模拟表格数据
+                // 模拟表格数据（可信度>=0.4，无<0.4的数据）
                 const tableData = ref([
-                    { date: '2026-05-13', group: '关东组', owner: 'hunter', targetObject: '4518890', accId: '3798994623741175', campaignId: '120243330771700297', adId: '12024331771760297', predictedCPC: 0.317, predictedEPA: 0.14, predictedCVR: 0.58, predictedRPM: 82.02, confidence: 0.2, scoreStatus: '待评分' },
+                    { date: '2026-05-13', group: '关东组', owner: 'hunter', targetObject: '4518890', accId: '3798994623741175', campaignId: '120243330771700297', adId: '12024331771760297', predictedCPC: 0.317, predictedEPA: 0.14, predictedCVR: 0.58, predictedRPM: 82.02, confidence: 0.4, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '9组', owner: 'yunduole0409', targetObject: '4492086', accId: '461355412990159', campaignId: '1202418820200570', adId: '-', predictedCPC: 0.136, predictedEPA: 0.62, predictedCVR: 0.23, predictedRPM: 162.01, confidence: 0.8, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '9组', owner: 'Belle0409', targetObject: '4520012', accId: '556345850196020', campaignId: '1202413365600129', adId: '-', predictedCPC: 0.318, predictedEPA: 0, predictedCVR: 0, predictedRPM: 0, confidence: 0.5, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '8组-灵动', owner: 'harian0409', targetObject: '4487653', accId: '567890123456789', campaignId: '1202418820200571', adId: '-', predictedCPC: 0.241, predictedEPA: 0.26, predictedCVR: 0.57, predictedRPM: 169.01, confidence: 0.7, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '8组-灵动', owner: 'Shim-0409', targetObject: '4532108', accId: '678901234567890', campaignId: '1202413365600130', adId: '-', predictedCPC: 0.189, predictedEPA: 0.35, predictedCVR: 0.42, predictedRPM: 145.32, confidence: 0.6, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '9组', owner: 'may0408', targetObject: '4518890', accId: '789012345678901', campaignId: '1202418820200572', adId: '-', predictedCPC: 0.275, predictedEPA: 0.18, predictedCVR: 0.38, predictedRPM: 128.45, confidence: 0.4, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '关东组', owner: 'Yudy0408', targetObject: '4492086', accId: '890123456789012', campaignId: '1202413365600131', adId: '-', predictedCPC: 0.156, predictedEPA: 0.48, predictedCVR: 0.31, predictedRPM: 156.78, confidence: 0.9, scoreStatus: '待评分' },
-                    { date: '2026-05-13', group: '7组', owner: 'lejia0408', targetObject: '4520012', accId: '901234567890123', campaignId: '1202418820200573', adId: '-', predictedCPC: 0.298, predictedEPA: 0.22, predictedCVR: 0.45, predictedRPM: 134.56, confidence: 0.3, scoreStatus: '待评分' },
+                    { date: '2026-05-13', group: '7组', owner: 'lejia0408', targetObject: '4520012', accId: '901234567890123', campaignId: '1202418820200573', adId: '-', predictedCPC: 0.298, predictedEPA: 0.22, predictedCVR: 0.45, predictedRPM: 134.56, confidence: 0.4, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '6组', owner: 'hunter', targetObject: '4487653', accId: '123456789012345', campaignId: '1202413365600132', adId: '-', predictedCPC: 0.213, predictedEPA: 0.31, predictedCVR: 0.52, predictedRPM: 178.90, confidence: 0.7, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '关东组', owner: 'yunduole0409', targetObject: '4532108', accId: '234567890123456', campaignId: '1202418820200574', adId: '-', predictedCPC: 0.167, predictedEPA: 0.55, predictedCVR: 0.28, predictedRPM: 142.34, confidence: 0.8, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '9组', owner: 'Belle0409', targetObject: '4518890', accId: '345678901234567', campaignId: '1202413365600133', adId: '-', predictedCPC: 0.234, predictedEPA: 0.19, predictedCVR: 0.61, predictedRPM: 98.76, confidence: 0.5, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '8组-灵动', owner: 'harian0409', targetObject: '4492086', accId: '456789012345678', campaignId: '1202418820200575', adId: '-', predictedCPC: 0.192, predictedEPA: 0.42, predictedCVR: 0.35, predictedRPM: 167.89, confidence: 0.6, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '7组', owner: 'Shim-0409', targetObject: '4520012', accId: '567890123456789', campaignId: '1202413365600134', adId: '-', predictedCPC: 0.287, predictedEPA: 0.27, predictedCVR: 0.48, predictedRPM: 112.45, confidence: 0.4, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '6组', owner: 'may0408', targetObject: '4487653', accId: '678901234567890', campaignId: '1202418820200576', adId: '-', predictedCPC: 0.145, predictedEPA: 0.58, predictedCVR: 0.22, predictedRPM: 189.23, confidence: 0.9, scoreStatus: '待评分' },
-                    { date: '2026-05-13', group: '关东组', owner: 'Yudy0408', targetObject: '4532108', accId: '789012345678901', campaignId: '1202413365600135', adId: '-', predictedCPC: 0.256, predictedEPA: 0.24, predictedCVR: 0.54, predictedRPM: 123.67, confidence: 0.3, scoreStatus: '待评分' },
+                    { date: '2026-05-13', group: '关东组', owner: 'Yudy0408', targetObject: '4532108', accId: '789012345678901', campaignId: '1202413365600135', adId: '-', predictedCPC: 0.256, predictedEPA: 0.24, predictedCVR: 0.54, predictedRPM: 123.67, confidence: 0.4, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '9组', owner: 'lejia0408', targetObject: '4518890', accId: '890123456789012', campaignId: '1202418820200577', adId: '-', predictedCPC: 0.178, predictedEPA: 0.45, predictedCVR: 0.33, predictedRPM: 156.12, confidence: 0.7, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '8组-灵动', owner: 'hunter', targetObject: '4492086', accId: '901234567890123', campaignId: '1202413365600136', adId: '-', predictedCPC: 0.223, predictedEPA: 0.21, predictedCVR: 0.59, predictedRPM: 134.89, confidence: 0.5, scoreStatus: '待评分' },
                     { date: '2026-05-13', group: '7组', owner: 'yunduole0409', targetObject: '4520012', accId: '123456789012345', campaignId: '1202418820200578', adId: '-', predictedCPC: 0.169, predictedEPA: 0.52, predictedCVR: 0.26, predictedRPM: 178.45, confidence: 0.8, scoreStatus: '待评分' },
@@ -692,27 +725,11 @@
                 // 方法
                 const getConfidenceClass = (confidence) => {
                     if (confidence >= 0.7) return 'confidence-high';
-                    if (confidence >= 0.4) return 'confidence-medium';
-                    return 'confidence-low';
+                    return 'confidence-medium';
                 };
                 
                 const handleSearch = () => {
                     ElMessage.success('查询成功');
-                };
-                
-                const handleReset = () => {
-                    filters.value = {
-                        date: '2026-05-13',
-                        platform: 'AFD-7',
-                        group: [],
-                        owner: [],
-                        targetObject: [],
-                        accId: '',
-                        campaignId: '',
-                        adId: '',
-                        confidence: null
-                    };
-                    ElMessage.info('已重置筛选条件');
                 };
                 
                 const handleScore = (row) => {
@@ -732,11 +749,13 @@
                     groupOptions,
                     ownerOptions,
                     targetObjectOptions,
+                    accIdOptions,
+                    campaignIdOptions,
+                    adIdOptions,
                     pagination,
                     tableData,
                     getConfidenceClass,
                     handleSearch,
-                    handleReset,
                     handleScore,
                     handleSizeChange,
                     handleCurrentChange
