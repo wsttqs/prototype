@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARB · 客户端 - 广告预审</title>
+  <style>
+    :root {
+      --el-color-primary: #409EFF;
+      --el-color-primary-light-9: #ecf5ff;
+      --el-color-primary-light-7: #c5e1ff;
+      --el-color-success: #67c23a;
+      --el-color-success-light-9: #f0f9eb;
+      --el-color-success-light-7: #c2e7b0;
+      --el-color-warning: #e6a23c;
+      --el-color-warning-light-9: #fdf6ec;
+      --el-color-warning-light-7: #f5dab1;
+      --el-color-danger: #f56c6c;
+      --el-color-danger-light-9: #fef0f0;
+      --el-color-danger-light-7: #fbc4c4;
+      --el-color-info: #909399;
+      --el-color-info-light-9: #f4f4f5;
+      --el-color-info-light-7: #d9d9d9;
+      --el-text-color-primary: #303133;
+      --el-text-color-regular: #606266;
+      --el-text-color-secondary: #909399;
+      --el-text-color-placeholder: #a8abb2;
+      --el-border-color: #dcdfe6;
+      --el-border-color-light: #e4e7ed;
+      --el-border-color-lighter: #ebeef5;
+      --el-fill-color-light: #f5f7fa;
+      --sb: #001529;
+      --sb-logo: #002140;
+      --shadow: 0 1px 4px rgba(0,21,41,.08);
+      --shadow-md: 0 4px 12px rgba(0,21,41,.12);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      font-size: 14px; color: var(--el-text-color-primary); background: #f0f2f5;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='220' viewBox='0 0 320 220'><text x='30' y='130' font-family='PingFang SC, Microsoft YaHei, sans-serif' font-size='26' fill='rgba(0,0,0,0.04)' transform='rotate(-22 160 110)'>rupert</text></svg>");
+      background-size: 320px 220px;
+    }
+    .shell { display: flex; height: 100vh; }
+    /* === 侧边栏 === */
+    .sb { width: 200px; background: var(--sb); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sb-logo { height: 50px; background: var(--sb-logo); display: flex; align-items: center; gap: 8px; padding: 0 18px; font-size: 16px; font-weight: 600; letter-spacing: .5px; flex-shrink: 0; }
+    .sb-logo-mark { width: 26px; height: 26px; border-radius: 50%; background: var(--el-color-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+    .sb-menu { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .sb-menu::-webkit-scrollbar { width: 4px; }
+    .sb-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+    .sb-item { display: flex; align-items: center; gap: 10px; padding: 9px 18px; color: rgba(255,255,255,.82); cursor: pointer; font-size: 13.5px; user-select: none; }
+    .sb-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .sb-item.active { color: #fff; background: var(--el-color-primary); }
+    .sb-item .ic { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sb-item .ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    /* === 角色视图切换 === */
+    .role-view { display: none; }
+    .role-view.active { display: block; }
+    /* === 主区 === */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+    .header { height: 44px; background: #fff; border-bottom: 1px solid var(--el-border-color-lighter); display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; }
+    .crumb { color: var(--el-text-color-secondary); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .crumb b { color: var(--el-text-color-primary); font-weight: 500; }
+    .crumb .sep { color: var(--el-text-color-placeholder); }
+    .h-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+    .h-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; color: var(--el-text-color-regular); position: relative; }
+    .h-btn:hover { background: #f0f4fa; color: var(--el-color-primary); }
+    .h-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .bell-badge { position: absolute; top: 3px; right: 3px; min-width: 14px; height: 14px; padding: 0 4px; background: var(--el-color-danger); color: #fff; font-size: 10px; border-radius: 7px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .h-user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 13px; margin-left: 4px; }
+    .h-user:hover { background: #f0f4fa; }
+    .h-user .team { color: var(--el-text-color-secondary); }
+    .h-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #5b8def, #4091f7); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+    .content { flex: 1; overflow-y: auto; padding: 14px; }
+
+    /* === 卡片 === */
+    .el-card { background: #fff; border-radius: 4px; box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--el-border-color-lighter); }
+    .page-toolbar { background: #fff; border-radius: 4px; box-shadow: var(--shadow); padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; }
+    .page-toolbar .title { font-size: 14px; color: var(--el-text-color-primary); font-weight: 500; }
+    .page-toolbar .extra { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    /* === Element Plus 控件 === */
+    .el-input, .el-select, .el-date-editor { position: relative; display: inline-block; vertical-align: middle; }
+    .el-input__inner, .el-select__inner { width: 100%; height: 32px; padding: 0 30px 0 11px; border: 1px solid var(--el-border-color); border-radius: 4px; background: #fff; color: var(--el-text-color-primary); font-size: 14px; line-height: 32px; outline: 0; transition: border-color .2s; box-sizing: border-box; }
+    .el-input__inner:hover, .el-select__inner:hover { border-color: #c0c4cc; }
+    .el-input__inner:focus, .el-select__inner:focus { border-color: var(--el-color-primary); }
+    .el-input__inner::placeholder, .el-select__inner::placeholder { color: var(--el-text-color-placeholder); }
+    .el-input--small .el-input__inner, .el-select--small .el-select__inner { height: 28px; line-height: 28px; font-size: 13px; padding-right: 28px; }
+    .el-select__caret { display: inline-block; width: 0; height: 0; border: 4px solid transparent; border-top-color: currentColor; transform: translateY(2px); }
+    .el-select[data-opts] { cursor: pointer; }
+
+    /* === 按钮 === */
+    .el-button { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 15px; border: 1px solid var(--el-border-color); border-radius: 4px; background: #fff; color: var(--el-text-color-regular); font-size: 14px; cursor: pointer; outline: 0; transition: .1s; white-space: nowrap; gap: 4px; }
+    .el-button:hover { color: var(--el-color-primary); border-color: #b3d8ff; background: var(--el-color-primary-light-9); }
+    .el-button--primary { background: var(--el-color-primary); border-color: var(--el-color-primary); color: #fff; }
+    .el-button--primary:hover { background: #66b1ff; border-color: #66b1ff; color: #fff; }
+    .el-button--success { background: var(--el-color-success); border-color: var(--el-color-success); color: #fff; }
+    .el-button--success:hover { background: #85ce61; border-color: #85ce61; color: #fff; }
+    .el-button--danger { background: var(--el-color-danger); border-color: var(--el-color-danger); color: #fff; }
+    .el-button--danger:hover { background: #f78989; border-color: #f78989; color: #fff; }
+    .el-button--small { height: 28px; padding: 0 12px; font-size: 13px; }
+
+    /* === 筛选条 === */
+    .arb-filter { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .arb-filter .filt-actions { display: flex; gap: 8px; margin-left: auto; }
+
+    /* === AI 审核结果列 === */
+    .ai-result { display: inline-flex; align-items: center; gap: 6px; }
+    .ai-result .ai-why { color: var(--el-color-primary); cursor: pointer; font-size: 12px; }
+    .ai-result .ai-why:hover { text-decoration: underline; }
+    .ai-result.fail { color: var(--el-color-danger); }
+
+    /* === Tabs === */
+    .el-tabs { padding: 0; }
+    .el-tabs__header { margin: 0 16px; }
+    .el-tabs__nav-wrap { position: relative; }
+    .el-tabs__nav-wrap::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--el-border-color-lighter); }
+    .el-tabs__nav { display: flex; list-style: none; padding: 0; margin: 0; }
+    .el-tabs__item { padding: 0 16px; height: 40px; line-height: 40px; font-size: 14px; color: var(--el-text-color-regular); cursor: pointer; position: relative; }
+    .el-tabs__item:hover { color: var(--el-color-primary); }
+    .el-tabs__item.is-active { color: var(--el-color-primary); font-weight: 500; }
+    .el-tabs__item.is-active::after { content: ''; position: absolute; left: 16px; right: 16px; bottom: 0; height: 2px; background: var(--el-color-primary); border-radius: 2px 2px 0 0; }
+
+    /* === 表格 === */
+    .el-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .el-table thead th { background: #fafbfc; color: var(--el-text-color-regular); font-weight: 500; text-align: left; padding: 10px 20px; border-bottom: 1px solid var(--el-border-color-lighter); white-space: nowrap; }
+    .el-table tbody td { padding: 10px 20px; border-bottom: 1px solid var(--el-border-color-lighter); color: var(--el-text-color-primary); vertical-align: middle; }
+    .el-table tbody tr:hover { background: #f5f7fa; }
+    .el-table .num { font-variant-numeric: tabular-nums; }
+
+    /* === 标签 === */
+    .el-tag { display: inline-flex; align-items: center; padding: 0 7px; height: 22px; font-size: 12px; border-radius: 3px; border: 1px solid; line-height: 20px; white-space: nowrap; box-sizing: border-box; }
+    .el-tag--mini { height: 20px; padding: 0 6px; line-height: 18px; font-size: 11px; }
+    .el-tag--primary { color: var(--el-color-primary); background: var(--el-color-primary-light-9); border-color: var(--el-color-primary-light-7); }
+    .el-tag--success { color: var(--el-color-success); background: var(--el-color-success-light-9); border-color: var(--el-color-success-light-7); }
+    .el-tag--warning { color: var(--el-color-warning); background: var(--el-color-warning-light-9); border-color: var(--el-color-warning-light-7); }
+    .el-tag--danger { color: var(--el-color-danger); background: var(--el-color-danger-light-9); border-color: var(--el-color-danger-light-7); }
+    .el-tag--info { color: var(--el-color-info); background: var(--el-color-info-light-9); border-color: var(--el-color-info-light-7); }
+    .el-tag--dark { color: #fff; }
+    .el-tag--dark.el-tag--primary { background: var(--el-color-primary); border-color: var(--el-color-primary); }
+    .el-tag--dark.el-tag--success { background: var(--el-color-success); border-color: var(--el-color-success); }
+    .el-tag--dark.el-tag--warning { background: var(--el-color-warning); border-color: var(--el-color-warning); }
+    .el-tag--dark.el-tag--danger { background: var(--el-color-danger); border-color: var(--el-color-danger); }
+
+    /* === 分页 === */
+    .el-pagination { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--el-text-color-regular); }
+    .el-pagination__total { margin-right: 12px; }
+    .el-pagination__jump { display: flex; align-items: center; gap: 6px; margin-left: 8px; }
+    .el-pagination__jump input { width: 38px; height: 28px; padding: 0 4px; border: 1px solid var(--el-border-color); border-radius: 3px; text-align: center; font-size: 13px; outline: 0; }
+    .el-pagination .el-pager { display: flex; gap: 4px; list-style: none; padding: 0; margin: 0; }
+    .el-pagination .el-pager li, .el-pagination .btn-prev, .el-pagination .btn-next { min-width: 28px; height: 28px; padding: 0 6px; border: 1px solid var(--el-border-color); border-radius: 3px; background: #fff; color: var(--el-text-color-regular); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+    .el-pagination .el-pager li.active { background: var(--el-color-primary); border-color: var(--el-color-primary); color: #fff; }
+
+    /* === 行内文字链接 === */
+    .op-link { color: var(--el-color-primary); text-decoration: none; margin-right: 10px; cursor: pointer; }
+    .op-link:last-child { margin-right: 0; }
+    .op-link:hover { text-decoration: underline; }
+
+    /* === 弹窗 === */
+    .el-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
+    .el-overlay.show { display: flex; }
+    .el-dialog { background: #fff; border-radius: 4px; width: 720px; max-width: 96vw; max-height: 92vh; display: flex; flex-direction: column; box-shadow: var(--shadow-md); overflow: hidden; }
+    .el-dialog--lg { width: 960px; }
+    .el-dialog--xl { width: 1200px; max-width: 96vw; }
+    .el-dialog__header { padding: 16px 20px; border-bottom: 1px solid var(--el-border-color-lighter); display: flex; align-items: center; }
+    .el-dialog__title { font-size: 16px; font-weight: 500; }
+    .el-dialog__close { margin-left: auto; cursor: pointer; color: var(--el-text-color-secondary); font-size: 18px; line-height: 1; padding: 0 6px; background: none; border: 0; }
+    .el-dialog__close:hover { color: var(--el-text-color-primary); }
+    .el-dialog__body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .el-dialog__footer { padding: 14px 20px; border-top: 1px solid var(--el-border-color-lighter); display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* === 详情 KV === */
+    .kv-grid { display: grid; grid-template-columns: 1fr; gap: 10px 20px; }
+    .kv-grid .kv { display: flex; font-size: 13px; line-height: 1.7; }
+    .kv-grid .kv .k { color: var(--el-text-color-secondary); width: 84px; flex-shrink: 0; }
+    .kv-grid .kv .v { color: var(--el-text-color-primary); flex: 1; word-break: break-all; }
+    .detail-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+
+    /* === V2.0 审核详情：创意内容布局 === */
+    .creative-content { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px; }
+    .creative-materials { background: transparent; border-radius: 4px; padding: 0; }
+    .creative-materials__main { width: 100%; aspect-ratio: 1/1; background: #fff center/contain no-repeat; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; margin-bottom: 8px; cursor: zoom-in; }
+    .creative-materials__tip { display: none; }
+    .creative-materials__list { display: flex; gap: 6px; overflow-x: auto; }
+    .creative-materials__list .thumb { width: 56px; height: 56px; flex-shrink: 0; border: 2px solid transparent; border-radius: 3px; background-color: #f5f7fa; background-position: center; background-size: cover; background-repeat: no-repeat; cursor: pointer; }
+    .creative-materials__list .thumb.active { border-color: var(--el-color-primary); }
+    .creative-info { font-size: 13px; }
+    .creative-info .info-item { display: flex; padding: 6px 0; line-height: 1.6; }
+    .creative-info .info-item .label { color: var(--el-text-color-secondary); width: 90px; flex-shrink: 0; }
+    .creative-info .info-item .value { color: var(--el-text-color-primary); flex: 1; word-break: break-word; }
+    .creative-info .info-item .value a { color: var(--el-color-primary); text-decoration: none; }
+    .creative-info .info-item .value a:hover { text-decoration: underline; }
+    .creative-info .button-container { display: flex; gap: 10px; padding-top: 14px; margin-top: 8px; border-top: 1px dashed var(--el-border-color-lighter); }
+
+    /* === V2.0 审核详情：违规信息 === */
+    .illegal-content { border-top: 1px solid var(--el-border-color-lighter); padding-top: 28px; margin-top: 16px; }
+    .illegal-content .title { font-size: 14px; font-weight: 600; color: var(--el-text-color-primary); margin-bottom: 12px; }
+    .illegal-item { background: #fafbfc; border-radius: 4px; padding: 14px 16px; margin-bottom: 10px; border-left: 3px solid var(--el-color-danger); position: relative; }
+    .illegal-item .stage-tag { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 11px; line-height: 16px; border: 1px solid; margin-right: 6px; vertical-align: middle; }
+    .illegal-item .stage-tag.review { color: #e6a23c; border-color: #f5dab1; background: #fdf6ec; }
+    .illegal-item .stage-tag.initial { color: #409EFF; border-color: #b3d8ff; background: #ecf5ff; }
+    .illegal-item .stage-tag.ai { color: #909399; border-color: #d3d4d6; background: #f4f4f5; }
+    .illegal-item .delete-btn { position: absolute; top: 14px; right: 16px; color: #c0c4cc; font-size: 12px; cursor: pointer; }
+    .illegal-item .delete-btn:hover { color: var(--el-color-danger); }
+    .illegal-item .stage-actions { position: absolute; top: 12px; right: 16px; display: flex; gap: 8px; }
+    .illegal-item .stage-action { font-size: 12px; padding: 3px 12px; border-radius: 3px; cursor: pointer; border: 1px solid var(--el-border-color); color: var(--el-text-color-regular); background: #fff; transition: all .15s; }
+    .illegal-item .stage-action:hover { background: #f5f7fa; border-color: var(--el-color-primary); color: var(--el-color-primary); }
+    .illegal-item .stage-action + .reason-label { margin-top: 6px; }
+    .illegal-item .basic-info-row { display: flex; flex-wrap: wrap; gap: 16px; padding-bottom: 8px; border-bottom: 1px dashed var(--el-border-color-lighter); margin-bottom: 10px; }
+    .illegal-item .info-item { font-size: 12px; }
+    .illegal-item .info-item .label { color: var(--el-text-color-secondary); margin-right: 4px; }
+    .illegal-item .info-item .value { color: var(--el-text-color-primary); font-weight: 500; }
+    .illegal-item .reason-label { font-size: 13px; font-weight: 500; color: var(--el-text-color-primary); margin-bottom: 6px; }
+    /* 富文本展示 */
+    .rich-text-content { background: #fff; border: 1px solid var(--el-border-color-lighter); border-radius: 3px; padding: 10px 14px; font-size: 13px; line-height: 1.7; color: var(--el-text-color-primary); }
+    .rich-text-content p { margin: 0 0 8px 0; }
+    .rich-text-content p:last-child { margin-bottom: 0; }
+    .rich-text-content img { max-width: 100%; height: auto; border-radius: 3px; margin: 4px 0; }
+
+    /* === 证明材料区块（右侧创意信息下方） === */
+    .proof-materials { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--el-border-color-lighter); }
+    .proof-materials .sub-title { font-size: 13px; font-weight: 500; color: var(--el-text-color-primary); margin-bottom: 8px; }
+    .proof-materials .desc { color: var(--el-text-color-secondary); font-size: 12px; margin-bottom: 8px; }
+
+    /* === 图片预览弹窗 === */
+    .image-preview-mask { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 3000; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+    .image-preview-mask.show { display: flex; }
+    .image-preview-mask img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+
+    /* === 时间轴 === */
+    .timeline { padding: 6px 0 0; }
+    .tl-item { display: flex; gap: 12px; padding-bottom: 18px; position: relative; }
+    .tl-item:not(:last-child)::before { content: ''; position: absolute; left: 5px; top: 14px; bottom: -2px; width: 1px; background: var(--el-border-color-lighter); }
+    .tl-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--el-color-primary); margin-top: 5px; flex-shrink: 0; position: relative; z-index: 1; }
+    .tl-dot.ok { background: var(--el-color-success); }
+    .tl-dot.warn { background: var(--el-color-warning); }
+    .tl-dot.err { background: var(--el-color-danger); }
+    .tl-title { font-size: 13px; }
+    .tl-meta { color: var(--el-text-color-secondary); font-size: 12px; margin-top: 2px; }
+    .tl-reason { margin-top: 6px; padding: 8px 12px; background: var(--el-color-danger-light-9); border-left: 3px solid var(--el-color-danger); color: var(--el-color-danger); font-size: 12px; border-radius: 0 3px 3px 0; }
+    .tl-reason.ai { background: var(--el-color-warning-light-9); border-left-color: var(--el-color-warning); color: var(--el-color-warning); }
+
+    /* === 物料预览 === */
+    .mat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+    .mat-grid.col3 { grid-template-columns: repeat(3, 1fr); }
+    .mat-grid.col1 { grid-template-columns: 1fr; max-width: 240px; }
+    .mat-cell { width: 100%; height: 120px; border-radius: 3px; background: #f5f7fa center/cover no-repeat; border: 1px solid var(--el-border-color-lighter); }
+
+    /* === 表单 === */
+    .el-form-item { display: flex; align-items: flex-start; margin-bottom: 18px; }
+    .el-form-item__label { width: 96px; flex-shrink: 0; padding-top: 6px; color: var(--el-text-color-regular); text-align: right; padding-right: 12px; line-height: 1.4; }
+    .el-form-item.is-required .el-form-item__label-wrap::before { content: '*'; color: var(--el-color-danger); margin-right: 2px; }
+    .el-form-item__content { flex: 1; line-height: 32px; }
+    .el-form-item__content .el-input, .el-form-item__content .el-select, .el-form-item__content .el-textarea { width: 100%; }
+    .el-textarea__inner { width: 100%; padding: 8px 12px; border: 1px solid var(--el-border-color); border-radius: 4px; background: #fff; color: var(--el-text-color-primary); font-size: 14px; resize: vertical; line-height: 1.5; font-family: inherit; outline: 0; box-sizing: border-box; }
+    .el-textarea__inner:focus { border-color: var(--el-color-primary); }
+
+    /* === 富文本编辑器（简版，模拟 wangEditor / tinymce 工具栏） === */
+    .rich-editor { border: 1px solid var(--el-border-color); border-radius: 4px; background: #fff; }
+    .rich-editor__toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 8px; border-bottom: 1px solid var(--el-border-color-lighter); background: #fafbfc; }
+    .rich-editor__btn { min-width: 26px; height: 24px; padding: 0 6px; border: 0; background: transparent; color: var(--el-text-color-regular); font-size: 12px; cursor: pointer; border-radius: 3px; }
+    .rich-editor__btn:hover { background: #ecf5ff; color: var(--el-color-primary); }
+    .rich-editor__sep { width: 1px; height: 16px; background: var(--el-border-color-lighter); margin: 0 4px; }
+    .rich-editor__content { min-height: 120px; padding: 8px 12px; font-size: 14px; line-height: 1.6; outline: 0; }
+    .rich-editor__content:focus { outline: 0; }
+    .rich-editor__content b { font-weight: 600; }
+    .rich-editor__content i { font-style: italic; }
+    .rich-editor__content u { text-decoration: underline; }
+    .form-tip { color: var(--el-text-color-secondary); font-size: 12px; line-height: 1; margin-top: 6px; }
+    .el-upload { display: inline-block; }
+    .el-upload--picture-card { width: 88px; height: 88px; border: 1px dashed var(--el-border-color); border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--el-text-color-secondary); background: #fafafa; }
+    .el-upload--picture-card:hover { border-color: var(--el-color-primary); color: var(--el-color-primary); }
+
+    /* === 下拉弹层 === */
+    .el-select-popper { position: fixed; background: #fff; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,21,41,.12); z-index: 3000; padding: 6px 0; max-height: 240px; overflow-y: auto; min-width: 110px; }
+    .el-select-popper .opt { padding: 0 12px; height: 30px; line-height: 30px; font-size: 13px; cursor: pointer; color: var(--el-text-color-regular); }
+    .el-select-popper .opt:hover { background: #f5f7fa; color: var(--el-color-primary); }
+
+    /* ============================================================
+       仿真素材图（内嵌 SVG，不依赖外网，artifact 内可正常显示）
+       ============================================================ */
+
+    /* 广告素材 1：催化器回收（深蓝） */
+    .img-ad-1 { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><rect width='600' height='600' fill='%23eef2f9'/><rect x='40' y='40' width='520' height='520' rx='8' fill='%23ffffff' stroke='%23e0e5ee'/><path d='M40 48a8 8 0 018-8h504a8 8 0 018 8v56H40z' fill='%231b3b73'/><circle cx='74' cy='72' r='13' fill='%232f6fd0'/><text x='98' y='78' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>SCRAPMETAL PRO</text><text x='72' y='164' font-family='Arial' font-size='29' font-weight='bold' fill='%2316233d'>Catalytic Converter</text><text x='72' y='202' font-family='Arial' font-size='29' font-weight='bold' fill='%2316233d'>Recycling</text><text x='72' y='244' font-family='Arial' font-size='15' fill='%235a6479'>HU   ★★★★★   4.9</text><line x1='72' y1='268' x2='528' y2='268' stroke='%23e6eaf2' stroke-width='2'/><text x='88' y='308' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Up to 320 USD per unit</text><text x='88' y='342' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Free pick-up in 24 hours</text><text x='88' y='376' font-family='Arial' font-size='16' fill='%232c3e56'>✓  EPA-certified recycling</text><text x='88' y='410' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Instant payment on site</text><line x1='72' y1='440' x2='528' y2='440' stroke='%23e6eaf2' stroke-width='2'/><rect x='72' y='464' width='188' height='46' rx='23' fill='%232f6fd0'/><text x='110' y='493' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>Get a quote</text><g transform='rotate(-12 452 170)'><rect x='386' y='152' width='132' height='36' rx='4' fill='none' stroke='%23c0392b' stroke-width='3'/><text x='401' y='177' font-family='Arial' font-size='18' font-weight='bold' fill='%23c0392b'>APPROVED</text></g><text x='72' y='546' font-family='Arial' font-size='12' fill='%239aa3b2'>www.scrapmetal-pro.com/converter-value</text></svg>") center/contain no-repeat; }
+
+    /* 广告素材 2：移动兽医（绿） */
+    .img-ad-2 { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><rect width='600' height='600' fill='%23eef7f2'/><rect x='40' y='40' width='520' height='520' rx='8' fill='%23ffffff' stroke='%23e0e9e3'/><path d='M40 48a8 8 0 018-8h504a8 8 0 018 8v56H40z' fill='%231f7a4d'/><circle cx='74' cy='72' r='13' fill='%232ea86a'/><text x='98' y='78' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>VET ON WHEELS</text><text x='72' y='164' font-family='Arial' font-size='29' font-weight='bold' fill='%2314291f'>Mobile Vet Clinic</text><text x='72' y='202' font-family='Arial' font-size='29' font-weight='bold' fill='%2314291f'>September 2026</text><text x='72' y='244' font-family='Arial' font-size='15' fill='%235a6479'>HU   ★★★★★   4.8</text><line x1='72' y1='268' x2='528' y2='268' stroke='%23e2ede6' stroke-width='2'/><text x='88' y='308' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Vaccination packages</text><text x='88' y='342' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Dental cleaning at home</text><text x='88' y='376' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Senior pet checkups</text><text x='88' y='410' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Same-day appointments</text><line x1='72' y1='440' x2='528' y2='440' stroke='%23e2ede6' stroke-width='2'/><rect x='72' y='464' width='176' height='46' rx='23' fill='%232ea86a'/><text x='110' y='493' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>Book a visit</text><text x='72' y='546' font-family='Arial' font-size='12' fill='%239aa3b2'>www.vetonwheels.com/schedule</text></svg>") center/contain no-repeat; }
+
+    /* 广告素材 3：宠物营养（橙） */
+    .img-ad-3 { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><rect width='600' height='600' fill='%23fdf5ec'/><rect x='40' y='40' width='520' height='520' rx='8' fill='%23ffffff' stroke='%23ece2d6'/><path d='M40 48a8 8 0 018-8h504a8 8 0 018 8v56H40z' fill='%23b35309'/><circle cx='74' cy='72' r='13' fill='%23e07b1e'/><text x='98' y='78' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>PET NUTRITION LAB</text><text x='72' y='164' font-family='Arial' font-size='29' font-weight='bold' fill='%23301c08'>Best Food for</text><text x='72' y='202' font-family='Arial' font-size='29' font-weight='bold' fill='%23301c08'>Senior Dogs</text><text x='72' y='244' font-family='Arial' font-size='15' fill='%235a6479'>HU   ★★★★☆   4.2</text><line x1='72' y1='268' x2='528' y2='268' stroke='%23f0e5d8' stroke-width='2'/><text x='88' y='308' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Vet-approved recipes</text><text x='88' y='342' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Joint and mobility support</text><text x='88' y='376' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Grain-free options</text><text x='88' y='410' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Feeding chart included</text><line x1='72' y1='440' x2='528' y2='440' stroke='%23f0e5d8' stroke-width='2'/><rect x='72' y='464' width='176' height='46' rx='23' fill='%23e07b1e'/><text x='110' y='493' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>Read the guide</text><text x='72' y='546' font-family='Arial' font-size='12' fill='%239aa3b2'>www.petnutritionlab.com/senior-dogs</text></svg>") center/contain no-repeat; }
+
+    /* 广告素材 4：宠物保险（紫） */
+    .img-ad-4 { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><rect width='600' height='600' fill='%23f2f0fb'/><rect x='40' y='40' width='520' height='520' rx='8' fill='%23ffffff' stroke='%23e4e0f2'/><path d='M40 48a8 8 0 018-8h504a8 8 0 018 8v56H40z' fill='%235b3f9e'/><circle cx='74' cy='72' r='13' fill='%237a5cc4'/><text x='98' y='78' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>PETGUARD INSURANCE</text><text x='72' y='164' font-family='Arial' font-size='29' font-weight='bold' fill='%231e1533'>Pet Insurance 2026</text><text x='72' y='202' font-family='Arial' font-size='29' font-weight='bold' fill='%231e1533'>Comparison</text><text x='72' y='244' font-family='Arial' font-size='15' fill='%235a6479'>HU   ★★★★★   4.7</text><line x1='72' y1='268' x2='528' y2='268' stroke='%23e8e4f4' stroke-width='2'/><text x='88' y='308' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Cover from 6 USD per month</text><text x='88' y='342' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Accident and illness cover</text><text x='88' y='376' font-family='Arial' font-size='16' fill='%232c3e56'>✓  No age limit for enrolment</text><text x='88' y='410' font-family='Arial' font-size='16' fill='%232c3e56'>✓  Claims paid in 48 hours</text><line x1='72' y1='440' x2='528' y2='440' stroke='%23e8e4f4' stroke-width='2'/><rect x='72' y='464' width='176' height='46' rx='23' fill='%237a5cc4'/><text x='110' y='493' font-family='Arial' font-size='16' font-weight='bold' fill='%23ffffff'>Compare plans</text><text x='72' y='546' font-family='Arial' font-size='12' fill='%239aa3b2'>www.petguard-ins.com/compare</text></svg>") center/contain no-repeat; }
+
+    /* 证明材料 1：营业执照（扫描件） */
+    .img-proof-1 { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='420' viewBox='0 0 600 420'><rect width='600' height='420' fill='%23f3f1ec'/><rect x='26' y='22' width='548' height='376' fill='%23fffdf8' stroke='%23cfc7b8' stroke-width='2'/><rect x='36' y='32' width='528' height='356' fill='none' stroke='%23ded6c7'/><text x='244' y='82' font-family='Arial' font-size='25' font-weight='bold' fill='%231f2937'>营业执照</text><text x='234' y='102' font-family='Arial' font-size='11' fill='%23a5a096'>BUSINESS LICENSE</text><line x1='36' y1='118' x2='564' y2='118' stroke='%23ded6c7'/><text x='60' y='152' font-family='Arial' font-size='13' fill='%235b6472'>统一社会信用代码</text><rect x='196' y='141' width='228' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='190' font-family='Arial' font-size='13' fill='%235b6472'>名称</text><rect x='196' y='179' width='296' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='228' font-family='Arial' font-size='13' fill='%235b6472'>法定代表人</text><rect x='196' y='217' width='128' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='266' font-family='Arial' font-size='13' fill='%235b6472'>注册资本</text><rect x='196' y='255' width='150' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='304' font-family='Arial' font-size='13' fill='%235b6472'>经营范围</text><rect x='196' y='293' width='330' height='11' rx='5' fill='%23cfd6de'/><rect x='196' y='314' width='262' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='352' font-family='Arial' font-size='13' fill='%235b6472'>登记机关</text><rect x='196' y='341' width='144' height='11' rx='5' fill='%23cfd6de'/><circle cx='470' cy='330' r='46' fill='none' stroke='%23c0392b' stroke-width='3' opacity='0.82'/><circle cx='470' cy='330' r='34' fill='none' stroke='%23c0392b' stroke-width='1.2' opacity='0.7'/><text x='457' y='344' font-family='Arial' font-size='30' fill='%23c0392b' opacity='0.82'>★</text></svg>") center/contain no-repeat; }
+
+    /* 证明材料 2：动物诊疗许可证（扫描件） */
+    .img-proof-2 { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='420' viewBox='0 0 600 420'><rect width='600' height='420' fill='%23f3f1ec'/><rect x='26' y='22' width='548' height='376' fill='%23fffdf8' stroke='%23cfc7b8' stroke-width='2'/><rect x='36' y='32' width='528' height='356' fill='none' stroke='%23ded6c7'/><text x='218' y='82' font-family='Arial' font-size='25' font-weight='bold' fill='%231f2937'>动物诊疗许可证</text><text x='234' y='102' font-family='Arial' font-size='11' fill='%23a5a096'>VETERINARY LICENSE</text><line x1='36' y1='118' x2='564' y2='118' stroke='%23ded6c7'/><text x='60' y='152' font-family='Arial' font-size='13' fill='%235b6472'>许可证编号</text><rect x='196' y='141' width='200' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='190' font-family='Arial' font-size='13' fill='%235b6472'>机构名称</text><rect x='196' y='179' width='286' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='228' font-family='Arial' font-size='13' fill='%235b6472'>诊疗机构负责人</text><rect x='196' y='217' width='140' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='266' font-family='Arial' font-size='13' fill='%235b6472'>诊疗活动范围</text><rect x='196' y='255' width='316' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='304' font-family='Arial' font-size='13' fill='%235b6472'>有效期限</text><rect x='196' y='293' width='172' height='11' rx='5' fill='%23cfd6de'/><text x='60' y='352' font-family='Arial' font-size='13' fill='%235b6472'>发证机关</text><rect x='196' y='341' width='144' height='11' rx='5' fill='%23cfd6de'/><circle cx='470' cy='330' r='46' fill='none' stroke='%232f6fd0' stroke-width='3' opacity='0.82'/><circle cx='470' cy='330' r='34' fill='none' stroke='%232f6fd0' stroke-width='1.2' opacity='0.7'/><text x='457' y='344' font-family='Arial' font-size='30' fill='%232f6fd0' opacity='0.82'>★</text></svg>") center/contain no-repeat; }
+
+    /* 违规佐证截图（复审上传） */
+    .img-evidence { max-width: 100%; border-radius: 3px; margin: 4px 0; display: block; }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sb">
+    <div class="sb-logo"><div class="sb-logo-mark">Q</div><span>ARB</span></div>
+    <nav class="sb-menu">
+      <div class="sb-item active" data-view="client"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 9.4-8 10-4.5-.6-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg></span><span>客户端 - 广告预审</span></div>
+      <div class="sb-item" data-view="admin"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z M5 5v14h14V5z M7 8h10 M7 12h10 M7 16h6"/></svg></span><span>管理后台 - 广告预审</span></div>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="crumb"><b>广告预审</b></div>
+      <div class="h-actions">
+        <div class="h-btn" title="全屏"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></div>
+        <div class="h-btn" title="通知"><span class="bell-badge">3</span><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 004 0"/></svg></div>
+        <div class="h-btn" title="下载"><svg viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg></div>
+        <div class="h-btn" title="语言"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></div>
+        <div class="h-user"><span>rupert</span><span class="team">(604团)</span><div class="h-avatar">R</div></div>
+      </div>
+    </header>
+
+    <main class="content" id="app-content">
+
+      <!-- ========== 客户端 - 广告预审 ========== -->
+      <div class="role-view client-view active" id="client-view">
+      <!-- 顶部操作条：筛选 + 操作按钮（最右） -->
+      <div class="el-card">
+        <div class="arb-filter">
+          <span class="el-input el-input--small" style="width: 130px;"><input class="el-input__inner" placeholder="审核编号"></span>
+          <span class="el-select el-select--small" style="width: 130px;" data-opts="rupert,fanyuwei,Mira,Bele,Guotai,Magequan"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">提交人<i class="el-select__caret"></i></span></span>
+          <span class="el-select el-select--small" style="width: 130px;" data-opts="关东,向阳,冲锋"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">分组<i class="el-select__caret"></i></span></span>
+          <span class="el-select el-select--small" style="width: 130px;" data-opts="AFD-7,AFD-8"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">收入源<i class="el-select__caret"></i></span></span>
+          <span class="el-select el-select--small" style="width: 130px;" data-opts="facebook,google"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">流量源<i class="el-select__caret"></i></span></span>
+          <span class="el-select el-select--small" style="width: 130px;" data-opts="待审核,审核中,通过,不通过"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">AI 审核结果<i class="el-select__caret"></i></span></span>
+          <span class="el-input el-input--small" style="width: 200px;"><input class="el-input__inner" placeholder="开始日期 — 结束日期"></span>
+          <button class="el-button el-button--primary el-button--small" style="margin-left: 20px;">查询</button>
+          <button class="el-button el-button--primary el-button--small" style="margin-left: auto;" onclick="openSubmitModal()">+ 新增广告审核</button>
+        </div>
+
+        <div class="el-tabs">
+          <div class="el-tabs__header">
+            <div class="el-tabs__nav-wrap">
+              <ul class="el-tabs__nav">
+                <li class="el-tabs__item is-active" onclick="switchTab(this)">全部</li>
+                <li class="el-tabs__item" onclick="switchTab(this)">待审核</li>
+                <li class="el-tabs__item" onclick="switchTab(this)">初审通过</li>
+                <li class="el-tabs__item" onclick="switchTab(this)">复审通过</li>
+                <li class="el-tabs__item" onclick="switchTab(this)">驳回</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 0 0 14px;">
+          <table class="el-table">
+            <thead>
+              <tr>
+                <th style="width: 90px;">审核编号</th>
+                <th style="width: 80px;">分组</th>
+                <th style="width: 100px;">提交人</th>
+                <th style="width: 90px;">收入源</th>
+                <th style="width: 100px;">流量源</th>
+                <th style="width: 100px;">状态</th>
+                <th style="width: 120px;">AI 审核结果</th>
+                <th style="width: 150px;">提交时间</th>
+                <th style="width: 150px;">更新时间</th>
+                <th style="width: 220px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- rupert 自己提的，AI 审核不通过作为参考 -->
+              <tr>
+                <td class="num">212</td>
+                <td>冲锋</td>
+                <td>rupert</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--danger">不通过</span></td>
+                <td class="num">2026-09-11 17:26:05</td>
+                <td class="num">2026-09-11 17:26:11</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <!-- rupert 自己提的，复审中 -->
+              <tr>
+                <td class="num">214</td>
+                <td>关东</td>
+                <td>rupert</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">复审中</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 17:12:08</td>
+                <td class="num">2026-09-11 17:18:42</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <!-- rupert 自己提的，复审驳回 -->
+              <tr>
+                <td class="num">211</td>
+                <td>关东</td>
+                <td>rupert</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--danger">复审驳回</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-10 14:08:52</td>
+                <td class="num">2026-09-10 16:32:19</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a><a class="op-link" onclick="openResubmitModal()">重新编辑</a></td>
+              </tr>
+              <!-- rupert 自己提的，复审驳回 -->
+              <tr>
+                <td class="num">207</td>
+                <td>向阳</td>
+                <td>rupert</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--danger">复审驳回</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-08 16:55:11</td>
+                <td class="num">2026-09-08 17:32:08</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a><a class="op-link" onclick="openResubmitModal()">重新编辑</a></td>
+              </tr>
+              <!-- rupert 自己提的，AI 审核不通过作为参考 -->
+              <tr>
+                <td class="num">205</td>
+                <td>关东</td>
+                <td>rupert</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--danger">不通过</span></td>
+                <td class="num">2026-09-07 20:18:33</td>
+                <td class="num">2026-09-07 20:18:39</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <!-- 本租户别人提的，待初审 → rupert 作为初审安全员有"初审"操作 -->
+              <tr>
+                <td class="num">215</td>
+                <td>向阳</td>
+                <td>fanyuwei</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 16:48:33</td>
+                <td class="num">2026-09-11 16:48:40</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">216</td>
+                <td>冲锋</td>
+                <td>Mira</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 15:22:07</td>
+                <td class="num">2026-09-11 15:22:14</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">217</td>
+                <td>关东</td>
+                <td>Guotai</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 14:08:51</td>
+                <td class="num">2026-09-11 14:08:58</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">218</td>
+                <td>向阳</td>
+                <td>Bele</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 11:35:19</td>
+                <td class="num">2026-09-11 11:35:26</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">219</td>
+                <td>冲锋</td>
+                <td>fanyuwei</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 10:18:42</td>
+                <td class="num">2026-09-11 10:18:49</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <!-- 本租户别人提的，初审通过 → 操作列只有查看详情 -->
+              <tr>
+                <td class="num">220</td>
+                <td>关东</td>
+                <td>Magequan</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">初审通过</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 09:42:08</td>
+                <td class="num">2026-09-11 09:58:22</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">221</td>
+                <td>向阳</td>
+                <td>Bele</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">初审通过</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-10 18:22:36</td>
+                <td class="num">2026-09-10 18:36:11</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <!-- 本租户别人提的，复审通过 -->
+              <tr>
+                <td class="num">213</td>
+                <td>向阳</td>
+                <td>fanyuwei</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-11 15:18:14</td>
+                <td class="num">2026-09-11 15:31:32</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">210</td>
+                <td>向阳</td>
+                <td>Bele</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-10 09:42:30</td>
+                <td class="num">2026-09-10 10:15:08</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">208</td>
+                <td>关东</td>
+                <td>Guotai</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-09 11:06:22</td>
+                <td class="num">2026-09-09 11:23:51</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">206</td>
+                <td>冲锋</td>
+                <td>fanyuwei</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                <td class="num">2026-09-08 10:22:38</td>
+                <td class="num">2026-09-08 10:48:15</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+              <tr>
+                <td class="num">209</td>
+                <td>冲锋</td>
+                <td>Magequan</td>
+                <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">AI审核中</span></td>
+                <td><span class="ai-result pending"><span class="el-tag el-tag--mini el-tag--warning">审核中</span></span></td>
+                <td class="num">2026-09-09 21:18:46</td>
+                <td class="num">2026-09-09 21:18:50</td>
+                <td><a class="op-link" onclick="openDetailClient()">查看详情</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="padding: 14px 16px; display: flex; justify-content: center;">
+          <div class="el-pagination">
+            <span class="el-pagination__total">共 16 条</span>
+            <span class="el-select" style="width:110px;" data-opts="50条/页,100条/页,200条/页"><span class="el-select__inner" style="display:flex;align-items:center;">50条/页<i class="el-select__caret"></i></span></span>
+            <button class="btn-prev" disabled style="color:#c0c4cc;">‹</button>
+            <ul class="el-pager"><li class="active">1</li></ul>
+            <button class="btn-next" disabled style="color:#c0c4cc;">›</button>
+            <span class="el-pagination__jump">前往 <input value="1"/> 页</span>
+          </div>
+        </div>
+      </div>
+      </div>
+      <!-- /客户端 - 广告预审 -->
+
+      <!-- ========== 管理后台 - 广告预审 ========== -->
+      <div class="role-view admin-view" id="admin-view">
+        <div class="el-card">
+          <div class="arb-filter">
+            <span class="el-input el-input--small" style="width: 130px;"><input class="el-input__inner" placeholder="审核编号"></span>
+            <span class="el-input el-input--small" style="width: 140px;"><input class="el-input__inner" placeholder="提交人"></span>
+            <span class="el-select el-select--small" style="width: 110px;" data-opts="0团,1团,2团,3团,6团"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">团<i class="el-select__caret"></i></span></span>
+            <span class="el-select el-select--small" style="width: 130px;" data-opts="关东,向阳,冲锋"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">分组<i class="el-select__caret"></i></span></span>
+            <span class="el-select el-select--small" style="width: 130px;" data-opts="AFD-7,AFD-8"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">收入源<i class="el-select__caret"></i></span></span>
+            <span class="el-select el-select--small" style="width: 130px;" data-opts="facebook,google"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">流量源<i class="el-select__caret"></i></span></span>
+            <span class="el-select el-select--small" style="width: 130px;" data-opts="待审核,审核中,通过,不通过"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">AI 审核结果<i class="el-select__caret"></i></span></span>
+            <span class="el-input el-input--small" style="width: 200px;"><input class="el-input__inner" placeholder="开始日期 — 结束日期"></span>
+            <button class="el-button el-button--primary el-button--small" style="margin-left: 20px;">查询</button>
+            <button class="el-button el-button--primary el-button--small" style="margin-left: auto;" onclick="openSubmitModal()">+ 新增广告审核</button>
+          </div>
+          <div class="el-tabs">
+            <div class="el-tabs__header">
+              <div class="el-tabs__nav-wrap">
+                <ul class="el-tabs__nav">
+                  <li class="el-tabs__item is-active" onclick="switchTab(this)">全部</li>
+                  <li class="el-tabs__item" onclick="switchTab(this)">待审核</li>
+                  <li class="el-tabs__item" onclick="switchTab(this)">初审通过</li>
+                  <li class="el-tabs__item" onclick="switchTab(this)">复审通过</li>
+                  <li class="el-tabs__item" onclick="switchTab(this)">驳回</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 0 0 14px;">
+            <table class="el-table">
+              <thead>
+                <tr>
+                  <th style="width: 90px;">审核编号</th>
+                  <th style="width: 80px;">团</th>
+                  <th style="width: 80px;">分组</th>
+                  <th style="width: 100px;">提交人</th>
+                  <th style="width: 90px;">收入源</th>
+                  <th style="width: 100px;">流量源</th>
+                  <th style="width: 100px;">状态</th>
+                  <th style="width: 130px;">AI 审核结果</th>
+                  <th style="width: 150px;">提交时间</th>
+                  <th style="width: 150px;">更新时间</th>
+                  <th style="width: 220px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 待审核 → 标记漏放 -->
+                <tr>
+                  <td class="num">212</td>
+                  <td>1团</td>
+                  <td>冲锋</td>
+                  <td>rupert</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--danger">不通过</span></td>
+                  <td class="num">2026-09-11 17:26:05</td>
+                  <td class="num">2026-09-11 17:26:11</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">205</td>
+                  <td>3团</td>
+                  <td>关东</td>
+                  <td>rupert</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">待初审</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--danger">不通过</span></td>
+                  <td class="num">2026-09-07 20:18:33</td>
+                  <td class="num">2026-09-07 20:18:39</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <!-- 初审通过 → 复审（管理后台可复审，客户端无此操作） -->
+                <tr>
+                  <td class="num">220</td>
+                  <td>2团</td>
+                  <td>关东</td>
+                  <td>Magequan</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">初审通过</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-11 09:42:08</td>
+                  <td class="num">2026-09-11 09:58:22</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">221</td>
+                  <td>6团</td>
+                  <td>向阳</td>
+                  <td>Bele</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">初审通过</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-10 18:22:36</td>
+                  <td class="num">2026-09-10 18:36:11</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <!-- 复审中 → 查看详情 -->
+                <tr>
+                  <td class="num">214</td>
+                  <td>0团</td>
+                  <td>关东</td>
+                  <td>rupert</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">复审中</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-11 17:12:08</td>
+                  <td class="num">2026-09-11 17:18:42</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <!-- 复审通过 → 标记漏放（管理后台可标记） -->
+                <tr>
+                  <td class="num">213</td>
+                  <td>0团</td>
+                  <td>向阳</td>
+                  <td>fanyuwei</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-11 15:18:14</td>
+                  <td class="num">2026-09-11 15:31:32</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">210</td>
+                  <td>2团</td>
+                  <td>向阳</td>
+                  <td>Bele</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-10 09:42:30</td>
+                  <td class="num">2026-09-10 10:15:08</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">208</td>
+                  <td>1团</td>
+                  <td>关东</td>
+                  <td>Guotai</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-09 11:06:22</td>
+                  <td class="num">2026-09-09 11:23:51</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">206</td>
+                  <td>3团</td>
+                  <td>冲锋</td>
+                  <td>fanyuwei</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--success">复审通过</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-08 10:22:38</td>
+                  <td class="num">2026-09-08 10:48:15</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">209</td>
+                  <td>1团</td>
+                  <td>冲锋</td>
+                  <td>Magequan</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--warning">AI审核中</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--warning">检测中</span></td>
+                  <td class="num">2026-09-09 21:18:46</td>
+                  <td class="num">2026-09-09 21:18:50</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <!-- 复审驳回 → 查看详情 + 重新编辑（管理后台可让业务重新编辑） -->
+                <tr>
+                  <td class="num">211</td>
+                  <td>0团</td>
+                  <td>关东</td>
+                  <td>rupert</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--danger">复审驳回</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-10 14:08:52</td>
+                  <td class="num">2026-09-10 16:32:19</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+                <tr>
+                  <td class="num">207</td>
+                  <td>1团</td>
+                  <td>向阳</td>
+                  <td>rupert</td>
+                  <td><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--info">facebook</span></td>
+                  <td><span class="el-tag el-tag--mini el-tag--dark el-tag--danger">复审驳回</span></td>
+                  <td><span class="ai-result pass"><span class="el-tag el-tag--mini el-tag--success">通过</span></span></td>
+                  <td class="num">2026-09-08 16:55:11</td>
+                  <td class="num">2026-09-08 17:32:08</td>
+                  <td><a class="op-link" onclick="openDetailAdmin()">查看详情</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding: 14px 16px; display: flex; justify-content: center;">
+            <div class="el-pagination">
+              <span class="el-pagination__total">共 16 条</span>
+              <span class="el-select" style="width:110px;" data-opts="50条/页,100条/页,200条/页"><span class="el-select__inner" style="display:flex;align-items:center;">50条/页<i class="el-select__caret"></i></span></span>
+              <button class="pg-btn" disabled style="color:#c0c4cc;">‹</button>
+              <ul class="el-pager"><li class="active">1</li></ul>
+              <button class="pg-btn" disabled style="color:#c0c4cc;">›</button>
+              <span class="el-pagination__jump">前往 <input value="1"/> 页</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <!-- /管理后台 - 广告预审 -->
+    </main>
+  </div>
+</div>
+
+<!-- 弹窗 1: 新增广告审核 -->
+<div class="el-overlay" id="modal-submit">
+  <div class="el-dialog el-dialog--lg">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">新增广告审核</span>
+      <button class="el-dialog__close" onclick="closeAllModal()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">收入源</span></label><div class="el-form-item__content"><span class="el-select" style="width:100%;" data-opts="AFD-7,AFD-8"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">请选择<i class="el-select__caret"></i></span></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">流量源</span></label><div class="el-form-item__content"><span class="el-select" style="width:100%;" data-opts="facebook,google"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">请选择<i class="el-select__caret"></i></span></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">广告标题</span></label><div class="el-form-item__content"><span class="el-input" style="width:100%;"><input class="el-input__inner" placeholder="请输入广告标题（不超过 50 字）"></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">广告文案</span></label><div class="el-form-item__content"><textarea class="el-textarea__inner" rows="4" placeholder="请输入广告文案/描述"></textarea></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">行动号召</span></label><div class="el-form-item__content"><span class="el-select" style="width:100%;" data-opts="立即下载,立即购买,立即预约,了解更多"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">请选择<i class="el-select__caret"></i></span></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">落地链接</span></label><div class="el-form-item__content"><span class="el-input" style="width:100%;"><input class="el-input__inner" placeholder="https://"></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">广告素材</span></label><div class="el-form-item__content"><div class="el-upload el-upload--picture-card">+</div><div class="form-tip">支持图片或视频上传，可多张</div></div></div>
+      <div class="el-form-item"><label class="el-form-item__label"><span class="el-form-item__label-wrap">证明材料</span></label><div class="el-form-item__content">
+        <div class="el-upload el-upload--picture-card">+</div>
+        <textarea class="el-textarea__inner" rows="3" placeholder="证明材料说明（选填）" style="margin-top: 8px;"></textarea>
+      </div></div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeAllModal()">取消</button>
+      <button class="el-button el-button--primary" onclick="closeAllModal()">提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 2a: 审核详情（客户端） -->
+<div class="el-overlay" id="modal-detail-client">
+  <div class="el-dialog el-dialog--xl">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">审核详情</span>
+      <button class="el-dialog__close" onclick="closeAllModal()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <!-- 创意内容 -->
+      <div class="creative-content">
+        <div class="creative-materials">
+          <div class="creative-materials__main img-ad-1" onclick="openImagePreview(this)"></div>
+          <div class="creative-materials__list">
+            <div class="thumb img-ad-1 active" onclick="selectThumb(this, 'img-ad-1')"></div>
+            <div class="thumb img-ad-2" onclick="selectThumb(this, 'img-ad-2')"></div>
+            <div class="thumb img-ad-3" onclick="selectThumb(this, 'img-ad-3')"></div>
+            <div class="thumb img-ad-4" onclick="selectThumb(this, 'img-ad-4')"></div>
+          </div>
+        </div>
+        <div class="creative-info">
+          <div class="info-item"><span class="label">审核编号：</span><span class="value">212</span></div>
+          <div class="info-item"><span class="label">团：</span><span class="value">1团</span></div>
+          <div class="info-item"><span class="label">分组：</span><span class="value">冲锋</span></div>
+          <div class="info-item"><span class="label">提交人：</span><span class="value">rupert</span></div>
+          <div class="info-item"><span class="label">收入源：</span><span class="value"><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></span></div>
+          <div class="info-item"><span class="label">流量源：</span><span class="value"><span class="el-tag el-tag--mini el-tag--info">facebook</span></span></div>
+          <div class="info-item"><span class="label">落地链接：</span><span class="value"><a href="#" onclick="return false;">https://catsofnotes.com/es/article/scrap-value-of-catalytic-converters</a></span></div>
+          <div class="info-item"><span class="label">广告标题：</span><span class="value">The Scrap Value of Catalytic Converters</span></div>
+          <div class="info-item"><span class="label">广告文案：</span><span class="value">Learn how to safely recycle your old catalytic converter for cash. We connect you with certified recyclers in your area, ensuring compliance with environmental regulations.</span></div>
+          <div class="info-item"><span class="label">行动号召：</span><span class="value">立即预约</span></div>
+          <div class="info-item"><span class="label">提交时间：</span><span class="value">2026-09-11 17:26:05</span></div>
+          <div class="info-item"><span class="label">更新时间：</span><span class="value">2026-09-11 17:26:11</span></div>
+
+          <!-- 证明材料（右侧创意信息下方） -->
+          <div class="proof-materials">
+            <div class="sub-title">证明材料</div>
+            <div class="desc">营业执照、动物诊疗许可证（2 张图）</div>
+            <div class="mat-grid col1" style="grid-template-columns: 1fr 1fr; max-width: 100%;">
+              <div class="mat-cell img-proof-1" style="cursor: zoom-in;" onclick="openImagePreview(this)"></div>
+              <div class="mat-cell img-proof-2" style="cursor: zoom-in;" onclick="openImagePreview(this)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 审核记录（倒序：复审 → 初审 → AI 审核） -->
+      <div class="illegal-content">
+        <div class="title">审核记录</div>
+
+        <!-- 复审记录（最新，放最上） -->
+        <div class="illegal-item" style="border-left-color: var(--el-color-warning);">
+          <div class="basic-info-row">
+            <div class="info-item"><span class="stage-tag review">复审</span><span class="label">操作人：</span><span class="value">Joyce-Q</span></div>
+            <div class="info-item"><span class="label">操作时间：</span><span class="value">2026-09-11 17:26:05</span></div>
+            <div class="info-item"><span class="label">违规类型：</span><span class="value">夸大疗效：明显夸大</span></div>
+          </div>
+          <div class="reason-label">违规原因：</div>
+          <div class="rich-text-content">
+            <p>文案中"高价回收 / 当天到账"等表述存在夸大风险，宣传的服务与实际不符。</p>
+            <p><img class="img-evidence" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='560' height='300' viewBox='0 0 560 300'><rect width='560' height='300' fill='%23ffffff'/><rect width='560' height='34' fill='%23f0f3f8'/><circle cx='18' cy='17' r='5' fill='%23ff5f57'/><circle cx='36' cy='17' r='5' fill='%23febc2e'/><circle cx='54' cy='17' r='5' fill='%2328c840'/><rect x='76' y='8' width='420' height='18' rx='9' fill='%23e6eaf2'/><text x='88' y='21' font-family='Arial' font-size='11' fill='%23808a9b'>catsofnotes.com/es/article/scrap-value-of-catalytic-converters</text><rect x='28' y='60' width='300' height='14' rx='7' fill='%23c8cfd8'/><rect x='28' y='86' width='420' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='106' width='390' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='126' width='440' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='146' width='260' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='182' width='470' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='202' width='410' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='222' width='300' height='10' rx='5' fill='%23dde2ea'/><rect x='16' y='168' width='460' height='76' rx='4' fill='none' stroke='%23e03131' stroke-width='3'/><text x='28' y='276' font-family='Arial' font-size='12' fill='%23e03131'>页面未出现素材所宣传的回收价格与服务内容</text></svg>" alt="违规佐证截图"></p>
+          </div>
+        </div>
+
+        <!-- 初审通过记录 -->
+        <div class="illegal-item" style="border-left-color: var(--el-color-success);">
+          <div class="basic-info-row">
+            <div class="info-item"><span class="stage-tag initial">初审</span><span class="label">操作人：</span><span class="value">rupert</span></div>
+            <div class="info-item"><span class="label">操作时间：</span><span class="value">2026-09-11 17:25:30</span></div>
+          </div>
+          <div class="basic-info-row" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">
+            <div class="info-item" style="width: 100%;"><span class="label">审核结论：</span><span class="value" style="color: var(--el-color-success);">通过</span></div>
+          </div>
+        </div>
+
+        <!-- AI 审核记录（最旧，放最下） -->
+        <div class="illegal-item" style="border-left-color: var(--el-color-info);">
+          <div class="basic-info-row">
+            <div class="info-item"><span class="stage-tag ai">AI 审核</span><span class="label">操作人：</span><span class="value">系统</span></div>
+            <div class="info-item"><span class="label">操作时间：</span><span class="value">2026-09-11 17:26:11</span></div>
+            <div class="info-item"><span class="label">违规类型：</span><span class="value">落地页不一致</span></div>
+          </div>
+          <div class="reason-label">审核提示：</div>
+          <div class="rich-text-content">
+            <p>落地链接内容与素材宣传主题存在不一致：素材宣传"汽车催化器回收价值"，但链接页面为通用资讯内容，未涉及具体回收价格或服务。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeAllModal()">关闭</button>
+      <button class="el-button el-button--danger" onclick="openInitialRejectConfirm()">初审驳回</button>
+      <button class="el-button el-button--success" onclick="openInitialPassConfirm()">初审通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 2b: 审核详情（管理后台） -->
+<div class="el-overlay" id="modal-detail-admin">
+  <div class="el-dialog el-dialog--xl">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">审核详情</span>
+      <button class="el-dialog__close" onclick="closeAllModal()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <!-- 创意内容 -->
+      <div class="creative-content">
+        <div class="creative-materials">
+          <div class="creative-materials__main img-ad-1" onclick="openImagePreview(this)"></div>
+          <div class="creative-materials__list">
+            <div class="thumb img-ad-1 active" onclick="selectThumb(this, 'img-ad-1')"></div>
+            <div class="thumb img-ad-2" onclick="selectThumb(this, 'img-ad-2')"></div>
+            <div class="thumb img-ad-3" onclick="selectThumb(this, 'img-ad-3')"></div>
+            <div class="thumb img-ad-4" onclick="selectThumb(this, 'img-ad-4')"></div>
+          </div>
+        </div>
+        <div class="creative-info">
+          <div class="info-item"><span class="label">审核编号：</span><span class="value">212</span></div>
+          <div class="info-item"><span class="label">团：</span><span class="value">1团</span></div>
+          <div class="info-item"><span class="label">分组：</span><span class="value">冲锋</span></div>
+          <div class="info-item"><span class="label">提交人：</span><span class="value">rupert</span></div>
+          <div class="info-item"><span class="label">收入源：</span><span class="value"><span class="el-tag el-tag--mini el-tag--primary">AFD-7</span></span></div>
+          <div class="info-item"><span class="label">流量源：</span><span class="value"><span class="el-tag el-tag--mini el-tag--info">facebook</span></span></div>
+          <div class="info-item"><span class="label">落地链接：</span><span class="value"><a href="#" onclick="return false;">https://catsofnotes.com/es/article/scrap-value-of-catalytic-converters</a></span></div>
+          <div class="info-item"><span class="label">广告标题：</span><span class="value">The Scrap Value of Catalytic Converters</span></div>
+          <div class="info-item"><span class="label">广告文案：</span><span class="value">Learn how to safely recycle your old catalytic converter for cash. We connect you with certified recyclers in your area, ensuring compliance with environmental regulations.</span></div>
+          <div class="info-item"><span class="label">行动号召：</span><span class="value">立即预约</span></div>
+          <div class="info-item"><span class="label">提交时间：</span><span class="value">2026-09-11 17:26:05</span></div>
+          <div class="info-item"><span class="label">更新时间：</span><span class="value">2026-09-11 17:26:11</span></div>
+
+          <!-- 证明材料（右侧创意信息下方） -->
+          <div class="proof-materials">
+            <div class="sub-title">证明材料</div>
+            <div class="desc">营业执照、动物诊疗许可证（2 张图）</div>
+            <div class="mat-grid col1" style="grid-template-columns: 1fr 1fr; max-width: 100%;">
+              <div class="mat-cell img-proof-1" style="cursor: zoom-in;" onclick="openImagePreview(this)"></div>
+              <div class="mat-cell img-proof-2" style="cursor: zoom-in;" onclick="openImagePreview(this)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 审核记录（倒序：复审 → 初审 → AI 审核） -->
+      <div class="illegal-content">
+        <div class="title">审核记录</div>
+
+        <!-- 复审记录（最新，放最上） -->
+        <div class="illegal-item" style="border-left-color: var(--el-color-warning);">
+          <div class="basic-info-row">
+            <div class="info-item"><span class="stage-tag review">复审</span><span class="label">操作人：</span><span class="value">Joyce-Q</span></div>
+            <div class="info-item"><span class="label">操作时间：</span><span class="value">2026-09-11 17:26:05</span></div>
+            <div class="info-item"><span class="label">违规类型：</span><span class="value">夸大疗效：明显夸大</span></div>
+          </div>
+          <div class="reason-label">违规原因：</div>
+          <div class="rich-text-content">
+            <p>文案中"高价回收 / 当天到账"等表述存在夸大风险，宣传的服务与实际不符。</p>
+            <p><img class="img-evidence" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='560' height='300' viewBox='0 0 560 300'><rect width='560' height='300' fill='%23ffffff'/><rect width='560' height='34' fill='%23f0f3f8'/><circle cx='18' cy='17' r='5' fill='%23ff5f57'/><circle cx='36' cy='17' r='5' fill='%23febc2e'/><circle cx='54' cy='17' r='5' fill='%2328c840'/><rect x='76' y='8' width='420' height='18' rx='9' fill='%23e6eaf2'/><text x='88' y='21' font-family='Arial' font-size='11' fill='%23808a9b'>catsofnotes.com/es/article/scrap-value-of-catalytic-converters</text><rect x='28' y='60' width='300' height='14' rx='7' fill='%23c8cfd8'/><rect x='28' y='86' width='420' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='106' width='390' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='126' width='440' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='146' width='260' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='182' width='470' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='202' width='410' height='10' rx='5' fill='%23dde2ea'/><rect x='28' y='222' width='300' height='10' rx='5' fill='%23dde2ea'/><rect x='16' y='168' width='460' height='76' rx='4' fill='none' stroke='%23e03131' stroke-width='3'/><text x='28' y='276' font-family='Arial' font-size='12' fill='%23e03131'>页面未出现素材所宣传的回收价格与服务内容</text></svg>" alt="违规佐证截图"></p>
+          </div>
+        </div>
+
+        <!-- 初审通过记录（可标记漏放） -->
+        <div class="illegal-item" style="border-left-color: var(--el-color-success);">
+          <div class="stage-actions">
+            <span class="stage-action" data-missed="false" onclick="toggleMissed(this)">标记漏放</span>
+          </div>
+          <div class="basic-info-row">
+            <div class="info-item"><span class="stage-tag initial">初审</span><span class="label">操作人：</span><span class="value">rupert</span></div>
+            <div class="info-item"><span class="label">操作时间：</span><span class="value">2026-09-11 17:25:30</span></div>
+          </div>
+          <div class="basic-info-row" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">
+            <div class="info-item" style="width: 100%;"><span class="label">审核结论：</span><span class="value" style="color: var(--el-color-success);">通过</span></div>
+          </div>
+        </div>
+
+        <!-- AI 审核记录（最旧，放最下；可标记漏放） -->
+        <div class="illegal-item" style="border-left-color: var(--el-color-info);">
+          <div class="stage-actions">
+            <span class="stage-action" data-missed="false" onclick="toggleMissed(this)">标记漏放</span>
+          </div>
+          <div class="basic-info-row">
+            <div class="info-item"><span class="stage-tag ai">AI 审核</span><span class="label">操作人：</span><span class="value">系统</span></div>
+            <div class="info-item"><span class="label">操作时间：</span><span class="value">2026-09-11 17:26:11</span></div>
+            <div class="info-item"><span class="label">违规类型：</span><span class="value">落地页不一致</span></div>
+          </div>
+          <div class="reason-label">审核提示：</div>
+          <div class="rich-text-content">
+            <p>落地链接内容与素材宣传主题存在不一致：素材宣传"汽车催化器回收价值"，但链接页面为通用资讯内容，未涉及具体回收价格或服务。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeAllModal()">关闭</button>
+      <button class="el-button el-button--danger" onclick="openReviewRejectConfirm()">复审驳回</button>
+      <button class="el-button el-button--success" onclick="openReviewPassConfirm()">复审通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 4: 重新编辑 -->
+<div class="el-overlay" id="modal-resubmit">
+  <div class="el-dialog el-dialog--lg">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">重新编辑</span>
+      <button class="el-dialog__close" onclick="closeAllModal()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">收入源</span></label><div class="el-form-item__content"><span class="el-select" style="width:100%;" data-opts="AFD-7,AFD-8"><span class="el-select__inner" style="display:flex;align-items:center;">AFD-7<i class="el-select__caret"></i></span></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">流量源</span></label><div class="el-form-item__content"><span class="el-select" style="width:100%;" data-opts="facebook,google"><span class="el-select__inner" style="display:flex;align-items:center;">facebook<i class="el-select__caret"></i></span></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">广告标题</span></label><div class="el-form-item__content"><span class="el-input" style="width:100%;"><input class="el-input__inner" value="Senior Cat Care at Home - 7 Proven Tips"></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">广告文案</span></label><div class="el-form-item__content"><textarea class="el-textarea__inner" rows="4">Discover 7 proven tips to help your senior cat stay healthy and comfortable at home. From nutrition adjustments to gentle exercise routines, our vet-approved guide covers everything you need to know.</textarea></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">行动号召</span></label><div class="el-form-item__content"><span class="el-select" style="width:100%;" data-opts="立即下载,立即购买,立即预约,了解更多"><span class="el-select__inner" style="display:flex;align-items:center;">了解更多<i class="el-select__caret"></i></span></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">落地链接</span></label><div class="el-form-item__content"><span class="el-input" style="width:100%;"><input class="el-input__inner" value="https://catsofnotes.com/es/article/senior-cat-care-tips"></span></div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">广告素材</span></label><div class="el-form-item__content"><div class="mat-grid"><div class="mat-cell img-ad-3"></div><div class="mat-cell"></div><div class="mat-cell"></div><div class="mat-cell"></div></div></div></div>
+      <div class="el-form-item"><label class="el-form-item__label"><span class="el-form-item__label-wrap">证明材料</span></label><div class="el-form-item__content">
+        <div class="mat-grid col3" style="margin-bottom: 8px;"><div class="mat-cell img-proof-1"></div><div class="mat-cell"></div><div class="mat-cell"></div></div>
+        <textarea class="el-textarea__inner" rows="3" placeholder="证明材料说明"></textarea>
+      </div></div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeAllModal()">取消</button>
+      <button class="el-button el-button--primary" onclick="closeAllModal()">重新提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 5: 初审操作 -->
+<div class="el-overlay" id="modal-initial">
+  <div class="el-dialog el-dialog--lg">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">复审</span>
+      <button class="el-dialog__close" onclick="closeAllModal()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div class="detail-grid">
+        <div>
+          <div class="kv-grid">
+            <div class="kv"><span class="k">审核编号：</span><span class="v">215</span></div>
+            <div class="kv"><span class="k">团：</span><span class="v">2团</span></div>
+            <div class="kv"><span class="k">分组：</span><span class="v">向阳</span></div>
+            <div class="kv"><span class="k">提交人：</span><span class="v">fanyuwei</span></div>
+            <div class="kv"><span class="k">流量源：</span><span class="v"><span class="el-tag el-tag--mini el-tag--info">facebook</span></span></div>
+            <div class="kv"><span class="k">提交时间：</span><span class="v">2026-09-11 16:48:33</span></div>
+            <div class="kv"><span class="k">AI 审核：</span><span class="v"><span class="el-tag el-tag--mini el-tag--success">通过</span> · 2026-09-11 16:48:40</span></div>
+            <div class="kv" style="grid-column: 1 / -1;"><span class="k">广告标题：</span><span class="v">Mobile Vet Clinic Schedule - September 2026</span></div>
+            <div class="kv" style="grid-column: 1 / -1;"><span class="k">广告文案：</span><span class="v">Find a mobile vet clinic near you this September. Full vaccination packages, dental cleaning, and senior pet checkups available at your doorstep.</span></div>
+            <div class="kv"><span class="k">行动号召：</span><span class="v">立即预约</span></div>
+            <div class="kv"><span class="k">落地链接：</span><span class="v" style="color:var(--el-color-primary);">https://catsofnotes.com/es/article/mobile-vet-clinic-schedule</span></div>
+            <div class="kv" style="grid-column: 1 / -1;"><span class="k">广告素材：</span><span class="v"><div class="mat-grid col1"><div class="mat-cell img-ad-2"></div><div class="mat-cell img-ad-1"></div><div class="mat-cell img-ad-3"></div><div class="mat-cell img-ad-4"></div></div></span></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">审核时间轴</div>
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-dot ok"></div><div class="tl-body"><div class="tl-title">提交任务</div><div class="tl-meta">fanyuwei · 2026-09-11 16:48:33</div></div></div>
+            <div class="tl-item"><div class="tl-dot ok"></div><div class="tl-body"><div class="tl-title">AI 审核通过</div><div class="tl-meta">系统 · 2026-09-11 16:48:40</div></div></div>
+            <div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div class="tl-title">待初审</div><div class="tl-meta">请在右侧完成初审</div></div></div>
+          </div>
+          <div style="font-size: 14px; font-weight: 500; margin: 16px 0 8px;">证明材料</div>
+          <div class="form-tip" style="margin-bottom: 8px;">营业执照、动物诊疗许可证、兽医执业资格证（3 张图）</div>
+          <div class="mat-grid col1">
+            <div class="mat-cell img-proof-1"></div>
+            <div class="mat-cell img-proof-2"></div>
+            <div class="mat-cell"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--el-border-color-lighter);">
+        <div class="el-form-item" style="margin-bottom: 0;"><label class="el-form-item__label"><span class="el-form-item__label-wrap">初审备注</span></label><div class="el-form-item__content"><textarea class="el-textarea__inner" rows="3" placeholder="初审通过可不填，驳回必填驳回原因"></textarea></div></div>
+      </div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeAllModal()">取消</button>
+      <button class="el-button el-button--danger" onclick="openInitialRejectConfirm()">初审驳回</button>
+      <button class="el-button el-button--success" onclick="openInitialPassConfirm()">初审通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 6a: 初审通过确认（客户端） -->
+<div class="el-overlay" id="modal-initial-pass">
+  <div class="el-dialog">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">初审通过确认</span>
+      <button class="el-dialog__close" onclick="closeInitialPass()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div style="font-size: 14px; line-height: 1.8;">确认初审通过此素材吗？提交后将进入复审环节。</div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeInitialPass()">取消</button>
+      <button class="el-button el-button--success" onclick="closeInitialPass()">确认通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 6b: 复审通过确认（管理后台） -->
+<div class="el-overlay" id="modal-review-pass">
+  <div class="el-dialog">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">复审通过确认</span>
+      <button class="el-dialog__close" onclick="closeReviewPass()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div style="font-size: 14px; line-height: 1.8;">确认复审通过此素材吗？提交后素材将可正式投放。</div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeReviewPass()">取消</button>
+      <button class="el-button el-button--success" onclick="closeReviewPass()">确认通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 6c: 复审驳回确认（管理后台） -->
+<div class="el-overlay" id="modal-review-reject">
+  <div class="el-dialog">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">复审驳回</span>
+      <button class="el-dialog__close" onclick="closeReviewReject()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">违规类型</span></label><div class="el-form-item__content">
+        <span class="el-select" style="width:100%;" data-opts="夸大疗效,绝对化用语,违规资质,落地页不一致,其他"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">请选择违规类型<i class="el-select__caret"></i></span></span>
+      </div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">违规原因</span></label><div class="el-form-item__content">
+        <div class="rich-editor">
+          <div class="rich-editor__toolbar">
+            <button type="button" class="rich-editor__btn" onclick="execCmd('bold')"><b>B</b></button>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('italic')"><i>I</i></button>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('underline')"><u>U</u></button>
+            <span class="rich-editor__sep"></span>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('insertUnorderedList')">• 列表</button>
+            <span class="rich-editor__sep"></span>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('justifyLeft')">左对齐</button>
+          </div>
+          <div class="rich-editor__content" contenteditable="true" placeholder="请详细说明违规原因，便于业务修改"></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeReviewReject()">取消</button>
+      <button class="el-button el-button--danger" onclick="closeReviewReject()">确认驳回</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 弹窗 7: 标记漏放 / 取消标记漏放确认（管理后台） -->
+<div class="el-overlay" id="modal-missed">
+  <div class="el-dialog" style="width: 420px;">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title" id="missed-title">标记漏放</span>
+      <button class="el-dialog__close" onclick="closeMissedModal()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div id="missed-body" style="font-size: 14px; line-height: 1.8;">确认标记该审核结果为"漏放"吗？</div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeMissedModal()">取消</button>
+      <button id="missed-confirm-btn" class="el-button el-button--primary" onclick="confirmMissed()">确认标记</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 6: 初审驳回 -->
+<div class="el-overlay" id="modal-initial-reject">
+  <div class="el-dialog">
+    <div class="el-dialog__header">
+      <span class="el-dialog__title">初审驳回</span>
+      <button class="el-dialog__close" onclick="closeInitialReject()">×</button>
+    </div>
+    <div class="el-dialog__body">
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">违规类型</span></label><div class="el-form-item__content">
+        <span class="el-select" id="reject-reason-type" style="width:100%;" data-opts="夸大疗效,绝对化用语,违规资质,落地页不一致,其他"><span class="el-select__inner" style="display:flex;align-items:center;color:#a8abb2;">请选择违规类型<i class="el-select__caret"></i></span></span>
+      </div></div>
+      <div class="el-form-item is-required"><label class="el-form-item__label"><span class="el-form-item__label-wrap">违规原因</span></label><div class="el-form-item__content">
+        <div class="rich-editor">
+          <div class="rich-editor__toolbar">
+            <button type="button" class="rich-editor__btn" onclick="execCmd('bold')"><b>B</b></button>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('italic')"><i>I</i></button>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('underline')"><u>U</u></button>
+            <span class="rich-editor__sep"></span>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('insertUnorderedList')">• 列表</button>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('insertOrderedList')">1. 列表</button>
+            <span class="rich-editor__sep"></span>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('justifyLeft')">左对齐</button>
+            <button type="button" class="rich-editor__btn" onclick="execCmd('justifyCenter')">居中</button>
+          </div>
+          <div id="reject-reason-text" class="rich-editor__content" contenteditable="true" placeholder="请详细说明违规原因，便于业务修改"></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="el-dialog__footer">
+      <button class="el-button" onclick="closeInitialReject()">取消</button>
+      <button id="reject-submit-btn" class="el-button el-button--danger" disabled onclick="if(!this.disabled)closeInitialReject()">确认驳回</button>
+    </div>
+  </div>
+</div>
+
+<!-- 图片预览弹窗 -->
+<div class="image-preview-mask" id="image-preview" onclick="closeImagePreview()">
+  <img id="image-preview-img" src="" alt="预览">
+</div>
+
+<script>
+  // Tab 切换
+  function switchTab(el) {
+    el.parentNode.querySelectorAll('.el-tabs__item').forEach(x => x.classList.remove('is-active'));
+    el.classList.add('is-active');
+  }
+  // select 弹层
+  document.addEventListener('click', e => {
+    const sel = e.target.closest('.el-select[data-opts]');
+    if (!sel) {
+      const existing = document.querySelector('.el-select-popper');
+      if (existing && !e.target.closest('.el-select-popper')) existing.remove();
+      return;
+    }
+    e.stopPropagation();
+    const existing = document.querySelector('.el-select-popper');
+    if (existing) existing.remove();
+    const opts = sel.dataset.opts.split(',');
+    const r = sel.getBoundingClientRect();
+    const pop = document.createElement('div');
+    pop.className = 'el-select-popper';
+    pop.style.top = (r.bottom + 4) + 'px';
+    pop.style.left = r.left + 'px';
+    pop.style.width = r.width + 'px';
+    opts.forEach(o => {
+      const it = document.createElement('div');
+      it.className = 'opt';
+      it.textContent = o;
+      it.onclick = (ev) => {
+        ev.stopPropagation();
+        const placeholderList = ['全部', '请选择', '请选择驳回原因类型', '我的提交', '我的初审'];
+        if (placeholderList.includes(o)) {
+          sel.querySelector('.el-select__inner').innerHTML = '<span style="color:#a8abb2;">' + o + '</span><i class="el-select__caret"></i>';
+        } else {
+          sel.querySelector('.el-select__inner').innerHTML = o + '<i class="el-select__caret"></i>';
+        }
+        pop.remove();
+      };
+      pop.appendChild(it);
+    });
+    document.body.appendChild(pop);
+  });
+
+  function openSubmitModal() { document.getElementById('modal-submit').classList.add('show'); }
+  function openDetailClient() { document.getElementById('modal-detail-client').classList.add('show'); }
+  function openDetailAdmin() { document.getElementById('modal-detail-admin').classList.add('show'); }
+  function openReviewPassConfirm() { document.getElementById('modal-review-pass').classList.add('show'); }
+  function openReviewRejectConfirm() { document.getElementById('modal-review-reject').classList.add('show'); }
+  function closeInitialPass() { document.getElementById('modal-initial-pass').classList.remove('show'); }
+  function closeInitialReject() { document.getElementById('modal-initial-reject').classList.remove('show'); }
+  function closeReviewPass() { document.getElementById('modal-review-pass').classList.remove('show'); }
+  function closeReviewReject() { document.getElementById('modal-review-reject').classList.remove('show'); }
+  function openResubmitModal() { document.getElementById('modal-resubmit').classList.add('show'); }
+  function openInitialModal() { document.getElementById('modal-initial').classList.add('show'); }
+  function openInitialPassConfirm() { document.getElementById('modal-initial-pass').classList.add('show'); }
+  function openMissedModal(marked) {
+    const title = document.getElementById('missed-title');
+    const body = document.getElementById('missed-body');
+    const btn = document.getElementById('missed-confirm-btn');
+    if (marked) {
+      title.textContent = '取消标记漏放';
+      body.textContent = '确认取消该审核结果的"漏放"标记吗？';
+      btn.textContent = '确认取消';
+    } else {
+      title.textContent = '标记漏放';
+      body.textContent = '确认标记该审核结果为"漏放"吗？';
+      btn.textContent = '确认标记';
+    }
+    document.getElementById('modal-missed').classList.add('show');
+  }
+  function closeMissedModal() { document.getElementById('modal-missed').classList.remove('show'); }
+  let _currentMissedBtn = null;
+  function toggleMissed(btn) {
+    _currentMissedBtn = btn;
+    const marked = btn.dataset.missed === 'true';
+    openMissedModal(marked);
+  }
+  function confirmMissed() {
+    if (_currentMissedBtn) {
+      const marked = _currentMissedBtn.dataset.missed === 'true';
+      if (marked) {
+        _currentMissedBtn.dataset.missed = 'false';
+        _currentMissedBtn.textContent = '标记漏放';
+      } else {
+        _currentMissedBtn.dataset.missed = 'true';
+        _currentMissedBtn.textContent = '取消标记漏放';
+      }
+    }
+    closeMissedModal();
+  }
+  // 侧边栏角色视图切换
+  function switchRole(view) {
+    document.querySelectorAll('.sb-item[data-view]').forEach(x => x.classList.remove('active'));
+    document.querySelector('.sb-item[data-view="' + view + '"]').classList.add('active');
+    document.querySelectorAll('.role-view').forEach(x => x.classList.remove('active'));
+    document.getElementById(view + '-view').classList.add('active');
+  }
+  // 绑定侧边栏点击
+  document.querySelectorAll('.sb-item[data-view]').forEach(item => {
+    item.addEventListener('click', () => switchRole(item.dataset.view));
+  });
+  function openImagePreview(el) {
+    const bg = getComputedStyle(el).backgroundImage;
+    const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+    document.getElementById('image-preview-img').src = url;
+    document.getElementById('image-preview').classList.add('show');
+  }
+  function closeImagePreview() { document.getElementById('image-preview').classList.remove('show'); }
+  function selectThumb(el, cls) {
+    el.parentNode.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const main = el.parentNode.previousElementSibling;
+    main.className = 'creative-materials__main ' + cls;
+  }
+  function openInitialRejectConfirm() {
+    document.getElementById('modal-initial-reject').classList.add('show');
+    setTimeout(() => {
+      const btn = document.getElementById('reject-submit-btn');
+      if (btn) btn.disabled = true;
+      const txt = document.getElementById('reject-reason-text');
+      if (txt) {
+        txt.innerHTML = '';
+        txt.oninput = checkRejectValid;
+        txt.onkeyup = checkRejectValid;
+      }
+      const sel = document.getElementById('reject-reason-type');
+      if (sel) {
+        sel.querySelector('.el-select__inner').innerHTML = '<span style="color:#a8abb2;">请选择违规类型</span><i class="el-select__caret"></i>';
+        const obs = new MutationObserver(checkRejectValid);
+        obs.observe(sel.querySelector('.el-select__inner'), { childList: true, subtree: true, characterData: true });
+      }
+    }, 0);
+  }
+  function checkRejectValid() {
+    const sel = document.getElementById('reject-reason-type');
+    const txt = document.getElementById('reject-reason-text');
+    const btn = document.getElementById('reject-submit-btn');
+    if (!sel || !txt || !btn) return;
+    const selVal = sel.querySelector('.el-select__inner').textContent.trim();
+    const txtVal = (txt.textContent || txt.innerText || '').trim();
+    const placeholderList = ['请选择违规类型'];
+    const selOk = selVal && !placeholderList.includes(selVal);
+    const txtOk = txtVal.length > 0;
+    btn.disabled = !(selOk && txtOk);
+  }
+  function execCmd(cmd) {
+    document.execCommand(cmd, false, null);
+    const txt = document.getElementById('reject-reason-text');
+    if (txt) { txt.focus(); checkRejectValid(); }
+  }
+  function closeAllModal() { document.querySelectorAll('.el-overlay').forEach(m => m.classList.remove('show')); }
+  document.querySelectorAll('.el-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+  });
+</script>
+</body>
+</html>
