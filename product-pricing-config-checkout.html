@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>产品定价配置 · Checkout 实时预览</title>
+<style>
+  :root{
+    --primary:#409eff; --primary-dark:#66b1ff; --primary-light:#ecf5ff;
+    --success:#42b983; --danger:#f56c6c; --warning:#e6a23c;
+    --text:#303133; --text-1:#606266; --text-2:#909399; --text-3:#a8abb2;
+    --border:#dcdfe6; --border-light:#ebeef5; --fill:#f4f4f5; --page-bg:#f5f7fa;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--page-bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;padding:24px}
+  button{font-family:inherit}
+  .page{max-width:1480px;margin:0 auto}
+
+  /* ---------- 页头 ---------- */
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+  .page-head h1{margin:0 0 4px;font-size:20px;font-weight:600}
+  .page-head p{margin:0;color:var(--text-2);font-size:13px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--text-1);font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--primary);display:inline-block}
+  .dot.grey{background:#c0c4cc}
+
+  /* ---------- 双栏 ---------- */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;align-items:start}
+  .config-col{min-width:0}
+  @media (max-width:1320px){.layout{grid-template-columns:minmax(0,1fr) 360px}}
+  @media (max-width:1040px){.layout{grid-template-columns:1fr}.preview-col{position:static!important;max-height:none!important}}
+
+  /* ---------- 面板 ---------- */
+  .panel{background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:18px;overflow:hidden}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border-light);background:#fafbfc;flex-wrap:wrap}
+  .panel-title{font-size:15px;font-weight:600}
+  .panel-body{padding:18px 20px}
+  .muted{color:var(--text-2);font-size:12px}
+  .hint{color:var(--text-2);font-size:12px;line-height:1.6;margin-top:8px}
+  .req{color:var(--danger);margin-right:3px}
+  .empty-row{text-align:center;color:var(--text-2);padding:18px 0;font-size:13px}
+
+  /* ---------- Element 风格控件 ---------- */
+  .el-row{display:flex;flex-wrap:wrap;gap:0 20px}
+  .el-col{flex:1 1 0;min-width:0}
+  .el-col-12{flex:0 0 calc(50% - 10px)}
+  .el-col-24{flex:0 0 100%}
+  @media (max-width:720px){.el-col-12{flex:0 0 100%}}
+  .el-form-item{margin-bottom:16px}
+  .el-form-item:last-child{margin-bottom:0}
+  .el-form-item__label{display:block;color:var(--text-1);margin-bottom:8px;font-size:13px}
+  .el-input__inner{width:100%;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:4px;color:var(--text);background:#fff;font:inherit;transition:border-color .15s}
+  .el-input__inner:hover{border-color:#c0c4cc}
+  .el-input__inner:focus{outline:none;border-color:var(--primary)}
+  select.el-input__inner{cursor:pointer}
+  .el-radio-group{display:inline-flex;flex-wrap:wrap}
+  .el-radio-button{display:inline-block;padding:7px 14px;border:1px solid var(--border);border-left-width:0;background:#fff;color:var(--text-1);cursor:pointer;font-size:13px;line-height:1.3;white-space:nowrap;user-select:none}
+  .el-radio-button:first-child{border-left-width:1px;border-radius:4px 0 0 4px}
+  .el-radio-button:last-child{border-radius:0 4px 4px 0}
+  .el-radio-button:hover{color:var(--primary)}
+  .el-radio-button.is-active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .el-radio-button.is-active + .el-radio-button{border-left-color:var(--primary)}
+  .el-switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .el-switch__core{position:relative;display:inline-block;width:40px;height:20px;border-radius:10px;background:#c0c4cc;transition:background-color .2s;flex:0 0 auto}
+  .el-switch__core::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+  .el-switch.is-checked .el-switch__core{background:var(--success)}
+  .el-switch.is-checked .el-switch__core::after{transform:translateX(20px)}
+  .el-switch__label{color:var(--text-1);font-size:13px}
+  .el-tag{display:inline-block;padding:0 7px;height:20px;line-height:18px;border-radius:3px;font-size:11px;border:1px solid;vertical-align:middle}
+  .el-tag--primary{background:var(--primary-light);border-color:#d9ecff;color:var(--primary)}
+  .el-tag--info{background:var(--fill);border-color:#e9e9eb;color:var(--text-2)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:4px;padding:8px 14px;background:#fff;color:var(--text-1);cursor:pointer;font:inherit;font-size:13px}
+  .btn:hover{color:var(--primary);border-color:#c6e2ff;background:var(--primary-light)}
+  .btn-primary{color:#fff;border-color:var(--primary);background:var(--primary)}
+  .btn-primary:hover{color:#fff;border-color:var(--primary-dark);background:var(--primary-dark)}
+  .btn-sm{padding:5px 10px;font-size:12px}
+  .inline{display:flex;align-items:center;gap:10px}
+
+  /* ---------- 表格 ---------- */
+  .table-wrap{overflow-x:auto}
+  .el-table{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+  .el-table th,.el-table td{border:1px solid var(--border-light);padding:9px 10px;text-align:left;vertical-align:middle}
+  .el-table th{background:var(--page-bg);color:var(--text-1);font-weight:500;white-space:nowrap}
+  .el-table td.is-center,.el-table th.is-center{text-align:center}
+  .el-table tbody tr:hover{background:#fafcff}
+  .el-table input.el-input__inner{text-align:left}
+  .tier-cell{background:#fcfdff;min-width:140px}
+  .tier-cell-name{font-weight:600;color:var(--text)}
+  .row-hint{font-weight:400;font-size:11px;color:var(--text-2);margin-top:3px}
+  .dim-cell{color:var(--text-1)}
+  .op-btn{border:0;background:transparent;color:var(--text-3);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;line-height:1}
+  .op-btn:hover{color:var(--danger);background:#fef0f0}
+
+  /* ---------- 属性卡片 ---------- */
+  .attr-card{margin-bottom:14px;border-radius:4px}
+  .attr-card:last-child{margin-bottom:0}
+  .attr-card__header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-light);background:#fafbfc}
+  .attr-title{font-weight:600;font-size:14px}
+  .attr-head-right{display:flex;align-items:center;gap:8px}
+  .attr-card__body{padding:16px}
+  .chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .opt-chip{display:inline-flex;align-items:center;gap:2px;background:var(--fill);border:1px solid #e9e9eb;border-radius:4px;padding:2px 3px 2px 8px}
+  .opt-chip input{border:0;background:transparent;width:76px;height:22px;padding:0;font:inherit;font-size:12px;color:var(--text-1)}
+  .opt-chip input:focus{outline:none;color:var(--text)}
+  .opt-del{border:0;background:transparent;color:var(--text-3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:50%;font-style:normal}
+  .opt-del:hover{color:var(--danger);background:#fef0f0}
+  .opt-input{width:220px!important}
+
+  /* ---------- Checkout 预览 ---------- */
+  .preview-col{position:sticky;top:16px;max-height:calc(100vh - 32px)}
+  .preview-panel{background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;max-height:100%;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+  .preview-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-light);background:#fafbfc}
+  .thumb{width:46px;height:46px;border-radius:6px;background:linear-gradient(135deg,#fde68a,#fca5a5);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
+  .preview-title{font-size:13px;font-weight:600;color:var(--text)}
+  .preview-product{font-size:12px;color:var(--text-2);margin-top:3px}
+  .preview-body{padding:14px;overflow-y:auto;flex:1 1 auto;min-height:0;background:#f7f8fa}
+  .preview-empty{text-align:center;color:var(--text-2);font-size:13px;padding:30px 0}
+  .tier-card{border:1px solid #e4e7ed;border-radius:8px;background:#fff;margin-bottom:10px;transition:border-color .15s,box-shadow .15s}
+  .tier-card:last-child{margin-bottom:0}
+  .tier-card:hover{border-color:#b3d8ff}
+  .tier-card.is-selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(64,158,255,.12)}
+  .tier-head{display:flex;align-items:flex-start;gap:10px;padding:12px;cursor:pointer;border-radius:8px}
+  .tier-head:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+  .radio-dot{width:16px;height:16px;border-radius:50%;border:1px solid #c0c4cc;flex:0 0 auto;position:relative;background:#fff;margin-top:2px}
+  .is-selected .radio-dot{border-color:var(--primary)}
+  .is-selected .radio-dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--primary)}
+  .tier-main{flex:1 1 auto;min-width:0}
+  .tier-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .badge-reco{background:var(--primary-light);color:var(--primary);border:1px solid #d9ecff;font-size:11px;padding:1px 6px;border-radius:999px;font-weight:500}
+  .tier-desc{color:var(--text-2);font-size:12px;margin-top:3px;line-height:1.4}
+  .tier-prices{text-align:right;flex:0 0 auto}
+  .price-line{display:flex;align-items:baseline;gap:6px;justify-content:flex-end}
+  .p-orig{color:#c0c4cc;text-decoration:line-through;font-size:12px}
+  .p-sale{color:var(--danger);font-weight:700;font-size:18px;line-height:1.2}
+  .price-line.sub{margin-top:3px}
+  .p-off{color:var(--danger);background:#fef0f0;border-radius:3px;font-size:11px;padding:1px 5px}
+  .p-off:empty{display:none}
+  .p-ship{color:var(--text-2);font-size:12px}
+  .p-ship.free{color:var(--success)}
+  .tier-variants{border-top:1px dashed #e4e7ed;padding:10px 12px 12px;background:#fbfcfe;border-radius:0 0 8px 8px}
+  .variant-head{font-size:12px;color:var(--text-2);margin-bottom:6px}
+  .variant-item{padding:8px 0;border-bottom:1px dashed #eef0f5}
+  .variant-item:last-child{border-bottom:0}
+  .variant-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:5px}
+  .variant-label{font-size:12px;color:var(--text-1);font-weight:600}
+  .variant-controls{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .variant-controls label{flex:1 1 120px;min-width:110px}
+  .ctl-label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);margin-bottom:3px}
+  .tag-price{font-style:normal;font-size:10px;color:var(--primary);background:var(--primary-light);border:1px solid #d9ecff;border-radius:3px;padding:0 4px;line-height:15px}
+  .ctl-row{display:flex;align-items:center;gap:6px}
+  .ctl-row select{flex:1 1 auto;min-width:0;height:30px}
+  .ctl-hint{display:block;font-size:11px;color:var(--text-3);margin-top:3px;line-height:1.4}
+  .swatch{width:16px;height:16px;flex:0 0 auto;border:1px solid rgba(0,0,0,.12);border-radius:3px;display:inline-block}
+  .swatch.is-circle{border-radius:50%}
+  .unit{font-size:11px;color:var(--text-3);white-space:nowrap}
+  .preview-summary{border-top:1px solid var(--border-light);padding:12px 16px 16px;background:#fff}
+  .sum-title{font-size:13px;font-weight:600;margin-bottom:8px}
+  .sum-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--text-1);margin-bottom:6px;gap:10px}
+  .sum-row .v{color:var(--text);font-weight:600}
+  .sum-row.total{border-top:1px dashed var(--border-light);padding-top:9px;margin-top:4px;font-size:14px;font-weight:600;color:var(--text)}
+  .sum-total{color:var(--danger);font-size:22px;font-weight:700}
+  .btn-buy{width:100%;margin-top:10px;height:42px;border:0;border-radius:6px;background:var(--danger);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  .btn-buy:hover{background:#e64b4b}
+  .preview-hint{margin:8px 0 0;font-size:11px;color:var(--text-3);text-align:center}
+
+  /* ---------- 提示 ---------- */
+  .toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-12px);background:rgba(48,49,51,.92);color:#fff;padding:9px 16px;border-radius:4px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:99}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-head">
+    <div>
+      <h1>产品定价配置</h1>
+      <p>左侧配置与右侧 Checkout 预览实时联动 · 预览价格全部读取左侧输入框</p>
+    </div>
+    <div class="legend">
+      <span><i class="dot"></i>参与价格计算的属性（写入价格矩阵）</span>
+      <span><i class="dot grey"></i>仅展示的属性（不影响价格）</span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- ==================== 左侧：配置区 ==================== -->
+    <div class="config-col">
+
+      <!-- 基础信息 -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">基础信息</span>
+          <span class="muted">产品名称与币种会同步显示在右侧 Checkout</span>
+        </div>
+        <div class="panel-body">
+          <div class="el-row">
+            <div class="el-col el-col-12">
+              <div class="el-form-item">
+                <label class="el-form-item__label" for="productName"><span class="req">*</span>产品名称</label>
+                <input id="productName" class="el-input__inner" type="text" value="PS00615 狗窝">
+              </div>
+            </div>
+            <div class="el-col el-col-12">
+              <div class="el-form-item">
+                <label class="el-form-item__label" for="currency"><span class="req">*</span>计价币种</label>
+                <select id="currency" class="el-input__inner"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 套餐数量 -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">套餐数量</span>
+          <button type="button" class="btn btn-primary btn-sm" data-action="add-tier">添加套餐</button>
+        </div>
+        <div class="panel-body">
+          <div class="el-form-item">
+            <label class="el-form-item__label">默认选中套餐</label>
+            <div class="el-radio-group" id="defaultTierGroup"></div>
+            <div class="hint">默认选中的套餐会在右侧 Checkout 中自动展开属性选择区。</div>
+          </div>
+          <div class="table-wrap">
+            <table class="el-table" id="tierTable">
+              <thead>
+                <tr>
+                  <th style="width:46%">套餐名称</th>
+                  <th style="width:24%">购买数量</th>
+                  <th class="is-center" style="width:12%">操作</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="hint">修改套餐名称或购买数量后，右侧卡片标题、商品件数与属性选择组数会同步更新。</div>
+        </div>
+      </section>
+
+      <!-- 产品信息（定价矩阵） -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">产品信息</span>
+          <span class="muted" id="matrixNote"></span>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table class="el-table" id="priceTable">
+              <thead id="priceHead"></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="hint" id="matrixHint"></div>
+        </div>
+      </section>
+
+      <!-- 属性信息 -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">属性信息</span>
+          <span class="muted">可添加多个属性，并标记参与价格计算的属性</span>
+        </div>
+        <div class="panel-body">
+          <div class="el-row">
+            <div class="el-col el-col-12">
+              <div class="el-form-item">
+                <label class="el-form-item__label" for="newAttrName"><span class="req">*</span>属性名</label>
+                <div class="inline">
+                  <input id="newAttrName" class="el-input__inner" type="text" placeholder="请输入属性名" style="flex:1">
+                  <button type="button" class="btn btn-primary" data-action="add-attr">添加属性</button>
+                </div>
+              </div>
+            </div>
+            <div class="el-col el-col-12">
+              <div class="el-form-item">
+                <label class="el-form-item__label">是否显示产品图片</label>
+                <div class="el-switch is-checked" id="switchProductImage" data-action="toggle-image" role="switch" aria-checked="true" tabindex="0">
+                  <span class="el-switch__core"></span><span class="el-switch__label">是</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="attrList"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== 右侧：Checkout 预览 ==================== -->
+    <div class="preview-col">
+      <div class="preview-panel">
+        <div class="preview-head">
+          <div class="thumb" id="previewThumb">🐶</div>
+          <div>
+            <div class="preview-title" id="previewProduct">PS00615 狗窝</div>
+            <div class="preview-product">选择套餐与商品属性 · <span id="previewCurrency">$</span></div>
+          </div>
+        </div>
+        <div class="preview-body" id="previewBody"></div>
+        <div class="preview-summary" id="previewSummary"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+  'use strict';
+
+  /* ======================= 常量与原始定价数据 ======================= */
+  var CURRENCIES = [
+    { value: 'USD', symbol: '$' },
+    { value: 'CNY', symbol: '¥' },
+    { value: 'EUR', symbol: '€' },
+    { value: 'GBP', symbol: '£' },
+    { value: 'JPY', symbol: '¥' }
+  ];
+
+  /* 原始定价数据（不得修改）：数量 -> 尺码 -> [原价, 售价, 运费] */
+  var SEED_PRICES = {
+    1: { M: [119.98, 59.99, 12.60], L: [139.98, 69.99, 21.60], XL: [159.98, 79.99, 27.80] },
+    2: { M: [239.96, 109.99, 22.90], L: [279.96, 129.99, 38.80], XL: [319.96, 149.99, 53.50] },
+    3: { M: [359.94, 129.99, 31.50], L: [419.94, 169.99, 57.10], XL: [479.94, 199.99, 79.10] },
+    4: { M: [479.92, 149.99, 41.30], L: [559.92, 199.99, 75.40], XL: [639.92, 239.99, 104.70] }
+  };
+
+  /* 颜色色板：用于 Checkout 中的属性色块 */
+  var COLOR_MAP = {
+    '红色': '#e64545', '黑色': '#2f2f2f', '咖啡色': '#7b4b2a',
+    '灰色': '#9aa0a6', '蓝色': '#3d7eff', '紫色': '#8b5cf6',
+    '红': '#e64545', '黑': '#2f2f2f', '灰': '#9aa0a6', '蓝': '#3d7eff', '紫': '#8b5cf6'
+  };
+
+  var state = {
+    productName: 'PS00615 狗窝',
+    currency: 'USD',
+    showProductImage: true,
+    tiers: [],
+    attrs: [],
+    selectedTierId: null,
+    sel: {},
+    seq: 0
+  };
+
+  /* priceCache：仅用于「行新建 / 重建」时继承旧值，预览价格一律实时读取 DOM */
+  var priceCache = {};
+  var matrixReady = false;   /* 首次渲染前价格表尚未生成，避免用空 DOM 覆盖初始定价 */
+
+  /* ======================= 工具函数 ======================= */
+  function r2(v) { return Math.round((v + Number.EPSILON) * 100) / 100; }
+  function fmt(v) { return r2(v).toFixed(2); }
+  function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
+  function sym() {
+    for (var i = 0; i < CURRENCIES.length; i++) { if (CURRENCIES[i].value === state.currency) return CURRENCIES[i].symbol; }
+    return '$';
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function uid(p) { return p + (++state.seq); }
+  function clampQty(n) { n = Math.floor(num(n)); if (!isFinite(n) || n < 1) n = 1; if (n > 99) n = 99; return n; }
+  function findTier(id) { for (var i = 0; i < state.tiers.length; i++) { if (state.tiers[i].id === id) return state.tiers[i]; } return null; }
+  function findAttr(id) { for (var i = 0; i < state.attrs.length; i++) { if (state.attrs[i].id === id) return state.attrs[i]; } return null; }
+  function setText(root, sel, text) { var el = root.querySelector(sel); if (el) el.textContent = text; }
+  function flash(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(flash._t);
+    flash._t = setTimeout(function () { el.classList.remove('show'); }, 2000);
+  }
+
+  /* ======================= 数据模型 ======================= */
+  function makeAttr(name, opts, pricing, display) {
+    var a = { id: uid('a'), name: name, pricing: !!pricing, display: display || 'square', opts: [], defaultOpt: null, hint: '' };
+    (opts || []).forEach(function (o) { a.opts.push({ id: uid('o'), name: o }); });
+    a.defaultOpt = a.opts.length ? a.opts[0].id : null;
+    return a;
+  }
+  function makeTier(name, qty) { return { id: uid('t'), name: name, qty: clampQty(qty) }; }
+
+  /* 参与价格计算的属性 */
+  function pricingAttrs() {
+    return state.attrs.filter(function (a) { return a.pricing && a.opts.length > 0; });
+  }
+  /* 价格维度组合：1 个价格属性 -> M / L / XL；多个 -> 笛卡尔积 */
+  function priceCombos() {
+    var pa = pricingAttrs();
+    if (!pa.length) return [{ key: '', label: '—', names: [] }];
+    var combos = [{ key: '', label: '', names: [] }];
+    pa.forEach(function (attr) {
+      var next = [];
+      combos.forEach(function (c) {
+        attr.opts.forEach(function (o) {
+          next.push({
+            key: c.key ? c.key + '||' + o.id : o.id,
+            label: c.label ? c.label + ' / ' + o.name : o.name,
+            names: c.names.concat([o.name])
+          });
+        });
+      });
+      combos = next;
+    });
+    return combos;
+  }
+  function dimLabel() {
+    var pa = pricingAttrs();
+    if (!pa.length) return '价格属性';
+    return pa.map(function (a) { return a.name; }).join(' / ');
+  }
+  /* 单件商品在价格矩阵中的键 */
+  function itemKey(item) {
+    var pa = pricingAttrs();
+    if (!pa.length) return '';
+    var ids = [];
+    pa.forEach(function (a) { ids.push(item[a.id] || ''); });
+    return ids.join('||');
+  }
+  function itemKeyLabel(item) {
+    var pa = pricingAttrs();
+    if (!pa.length) return '—';
+    var names = [];
+    pa.forEach(function (a) {
+      var o = null;
+      for (var i = 0; i < a.opts.length; i++) { if (a.opts[i].id === item[a.id]) { o = a.opts[i]; break; } }
+      names.push(o ? o.name : '—');
+    });
+    return names.join(' / ');
+  }
+  function defaultItem() {
+    var it = {};
+    state.attrs.forEach(function (a) { it[a.id] = a.defaultOpt || (a.opts[0] ? a.opts[0].id : null); });
+    return it;
+  }
+  /* 同步某套餐的属性选择：数量变化 / 选项删除后自动修正 */
+  function syncTierSel(t) {
+    var s = state.sel[t.id] || (state.sel[t.id] = []);
+    while (s.length < t.qty) s.push(defaultItem());
+    if (s.length > t.qty) s.length = t.qty;
+    s.forEach(function (it) {
+      Object.keys(it).forEach(function (k) { if (!findAttr(k)) delete it[k]; });
+      state.attrs.forEach(function (a) {
+        var ok = false;
+        for (var i = 0; i < a.opts.length; i++) { if (a.opts[i].id === it[a.id]) { ok = true; break; } }
+        if (!ok) it[a.id] = a.defaultOpt || (a.opts[0] ? a.opts[0].id : null);
+      });
+    });
+  }
+  function syncAllSel() { state.tiers.forEach(syncTierSel); }
+
+  /* ======================= 价格矩阵（DOM 为唯一数据源） ======================= */
+  function readMatrix() {
+    var out = {};
+    var inputs = document.querySelectorAll('#priceTable tbody input[data-field]');
+    for (var i = 0; i < inputs.length; i++) {
+      var el = inputs[i];
+      var tid = el.getAttribute('data-tier-id');
+      var key = el.getAttribute('data-key') || '';
+      var f = el.getAttribute('data-field');
+      if (!out[tid]) out[tid] = {};
+      if (!out[tid][key]) out[tid][key] = { orig: 0, sale: 0, ship: 0 };
+      out[tid][key][f] = num(el.value);
+    }
+    return out;
+  }
+  /* 把当前 DOM 中的价格写回缓存，便于重建表格时保留用户输入 */
+  function captureMatrix() {
+    var inputs = document.querySelectorAll('#priceTable tbody input[data-field]');
+    for (var i = 0; i < inputs.length; i++) {
+      var el = inputs[i];
+      var tid = el.getAttribute('data-tier-id');
+      var key = el.getAttribute('data-key') || '';
+      var f = el.getAttribute('data-field');
+      if (!priceCache[tid]) priceCache[tid] = {};
+      if (!priceCache[tid][key]) priceCache[tid][key] = { orig: 0, sale: 0, ship: 0 };
+      priceCache[tid][key][f] = num(el.value);
+    }
+  }
+  function prevTierOf(tier) {
+    for (var i = 0; i < state.tiers.length; i++) { if (state.tiers[i].id === tier.id) return state.tiers[i - 1] || null; }
+    return null;
+  }
+  /* 新价格行初始值：优先取原始定价数据，其次按上一套餐单件价格折算 */
+  function seedRow(tier) {
+    var row = {};
+    var base = SEED_PRICES[tier.qty];
+    var prev = prevTierOf(tier);
+    priceCombos().forEach(function (c) {
+      var v = null;
+      if (base && c.names.length && base[c.names[0]]) {
+        var a = base[c.names[0]];
+        v = { orig: a[0], sale: a[1], ship: a[2] };
+      }
+      if (!v && prev && priceCache[prev.id] && priceCache[prev.id][c.key]) {
+        var p = priceCache[prev.id][c.key];
+        v = {
+          orig: r2(p.orig / prev.qty * tier.qty),
+          sale: r2(p.sale / prev.qty * tier.qty),
+          ship: r2(p.ship / prev.qty * tier.qty)
+        };
+      }
+      row[c.key] = v || { orig: 0, sale: 0, ship: 0 };
+    });
+    return row;
+  }
+  /* 新增价格维度时，用同一套餐中最接近的旧行继承价格 */
+  /* 价格键 -> 属性值名称序列（用于跨维度继承价格） */
+  function optNameById(optId) {
+    for (var i = 0; i < state.attrs.length; i++) {
+      var a = state.attrs[i];
+      for (var j = 0; j < a.opts.length; j++) { if (a.opts[j].id === optId) return a.opts[j].name; }
+    }
+    return '';
+  }
+  function keyNames(key) {
+    return String(key || '').split('||').filter(Boolean).map(optNameById);
+  }
+  function seedMissing(tier) {
+    var combos = priceCombos();
+    var cached = priceCache[tier.id] || (priceCache[tier.id] = {});
+    combos.forEach(function (c) {
+      if (cached[c.key]) return;
+      var best = null, bestScore = -1;
+      Object.keys(cached).forEach(function (k) {
+        if (k === c.key) return;
+        var kn = keyNames(k);
+        var score = 0;
+        for (var i = 0; i < c.names.length; i++) { if (kn[i] === c.names[i]) score++; }
+        if (score > bestScore) { bestScore = score; best = cached[k]; }
+      });
+      cached[c.key] = best ? { orig: best.orig, sale: best.sale, ship: best.ship } : { orig: 0, sale: 0, ship: 0 };
+    });
+  }
+  function renderMatrix() {
+    if (matrixReady) captureMatrix();
+    var combos = priceCombos();
+    var head = '<tr>' +
+      '<th style="width:150px">套餐数量</th>' +
+      '<th style="width:120px">' + esc(dimLabel()) + '</th>' +
+      '<th style="width:130px">原价</th>' +
+      '<th style="width:130px">售价</th>' +
+      '<th style="width:130px">运费</th>' +
+      '<th class="is-center" style="width:70px">操作</th>' +
+      '</tr>';
+    document.getElementById('priceHead').innerHTML = head;
+
+    var html = '';
+    state.tiers.forEach(function (t) {
+      if (!priceCache[t.id]) priceCache[t.id] = seedRow(t); else seedMissing(t);
+      combos.forEach(function (c, ci) {
+        var v = priceCache[t.id][c.key] || { orig: 0, sale: 0, ship: 0 };
+        html += '<tr data-tier-id="' + t.id + '" data-key="' + esc(c.key) + '">';
+        if (ci === 0) {
+          html += '<td class="tier-cell" rowspan="' + combos.length + '">' +
+            '<div class="tier-cell-name" data-role="tier-name">' + esc(t.name) + '</div>' +
+            '<div class="row-hint">× ' + t.qty + ' 件</div></td>';
+        }
+        html += '<td class="dim-cell">' + esc(c.label) + '</td>';
+        html += '<td><input class="el-input__inner" type="number" step="0.01" data-field="orig" data-tier-id="' + t.id + '" data-key="' + esc(c.key) + '" value="' + v.orig + '"></td>';
+        html += '<td><input class="el-input__inner" type="number" step="0.01" data-field="sale" data-tier-id="' + t.id + '" data-key="' + esc(c.key) + '" value="' + v.sale + '"></td>';
+        html += '<td><input class="el-input__inner" type="number" step="0.01" data-field="ship" data-tier-id="' + t.id + '" data-key="' + esc(c.key) + '" value="' + v.ship + '"></td>';
+        html += '<td class="is-center"><button type="button" class="op-btn" data-action="del-tier" title="删除「' + esc(t.name) + '」套餐及其全部价格行">✕</button></td>';
+        html += '</tr>';
+      });
+    });
+    var tbody = document.querySelector('#priceTable tbody');
+    tbody.innerHTML = html || '<tr><td colspan="6" class="empty-row">暂无价格配置</td></tr>';
+    matrixReady = true;
+
+    document.getElementById('matrixNote').textContent = combos.length + ' 个价格组合 × ' + state.tiers.length + ' 个套餐';
+    document.getElementById('matrixHint').innerHTML =
+      '价格行按「套餐 × <strong>' + esc(dimLabel()) + '</strong>」自动生成；新增套餐默认继承上一套餐的单件价格。' +
+      '同一套餐内商品选择相同规格时直接取该行价格，选择不同规格时按「套餐总价 ÷ 套餐数量」逐件累加。';
+  }
+  /* 仅刷新矩阵第二列文案（属性值改名时使用，避免重建表格丢失焦点） */
+  function refreshMatrixDimCells() {
+    var map = {};
+    priceCombos().forEach(function (c) { map[c.key] = c.label; });
+    var rows = document.querySelectorAll('#priceTable tbody tr[data-key]');
+    for (var i = 0; i < rows.length; i++) {
+      var k = rows[i].getAttribute('data-key') || '';
+      var cell = rows[i].querySelector('td.dim-cell');
+      if (cell && map[k] !== undefined) cell.textContent = map[k];
+    }
+  }
+  function refreshMatrixTierCell(t) {
+    var row = document.querySelector('#priceTable tbody tr[data-tier-id="' + t.id + '"]');
+    if (!row) return;
+    setText(row, '[data-role="tier-name"]', t.name);
+    var hint = row.querySelector('.row-hint');
+    if (hint) hint.textContent = '× ' + t.qty + ' 件';
+  }
+
+  /* ======================= 渲染：左侧套餐表 ======================= */
+  function renderTierTable() {
+    var tbody = document.querySelector('#tierTable tbody');
+    var html = '';
+    state.tiers.forEach(function (t) {
+      html += '<tr data-tier-id="' + t.id + '">' +
+        '<td><input class="el-input__inner" type="text" data-field="name" value="' + esc(t.name) + '"></td>' +
+        '<td><input class="el-input__inner" type="number" min="1" max="99" step="1" data-field="qty" value="' + t.qty + '"></td>' +
+        '<td class="is-center"><button type="button" class="op-btn" data-action="del-tier" title="删除套餐">✕</button></td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="3" class="empty-row">暂无套餐</td></tr>';
+  }
+  function renderDefaultGroup() {
+    var box = document.getElementById('defaultTierGroup');
+    var html = '';
+    state.tiers.forEach(function (t) {
+      html += '<label class="el-radio-button' + (t.id === state.selectedTierId ? ' is-active' : '') + '" data-tier-id="' + t.id + '">' +
+        '<span class="opt-text">' + esc(t.name) + '</span></label>';
+    });
+    box.innerHTML = html || '<span class="muted">暂无套餐</span>';
+  }
+
+  /* ======================= 渲染：属性信息 ======================= */
+  function renderAttrs() {
+    var box = document.getElementById('attrList');
+    var html = '';
+    state.attrs.forEach(function (a) {
+      html += '<div class="el-card attr-card" data-attr-id="' + a.id + '">';
+      html += '<div class="attr-card__header"><span class="attr-title">' + esc(a.name) + '</span>' +
+        '<span class="attr-head-right">' +
+        (a.pricing ? '<span class="el-tag el-tag--primary">参与价格计算</span>' : '<span class="el-tag el-tag--info">不参与价格计算</span>') +
+        '<button type="button" class="op-btn" data-action="del-attr" title="删除属性">✕</button>' +
+        '</span></div>';
+      html += '<div class="attr-card__body">';
+
+      html += '<div class="el-row">';
+      html += '<div class="el-col"><div class="el-form-item"><label class="el-form-item__label">展示类型</label>' +
+        '<div class="el-radio-group">' +
+        '<label class="el-radio-button' + (a.display === 'square' ? ' is-active' : '') + '" data-action="display" data-val="square">方框</label>' +
+        '<label class="el-radio-button' + (a.display === 'circle' ? ' is-active' : '') + '" data-action="display" data-val="circle">圆形</label>' +
+        '</div></div></div>';
+
+      html += '<div class="el-col"><div class="el-form-item"><label class="el-form-item__label">参与价格计算</label>' +
+        '<div class="el-switch' + (a.pricing ? ' is-checked' : '') + '" data-action="pricing" role="switch" aria-checked="' + (a.pricing ? 'true' : 'false') + '" tabindex="0">' +
+        '<span class="el-switch__core"></span><span class="el-switch__label">' + (a.pricing ? '是' : '否') + '</span></div>' +
+        '<div class="hint">开启后该属性写入价格矩阵</div></div></div>';
+
+      html += '<div class="el-col"><div class="el-form-item"><label class="el-form-item__label">提示信息</label>' +
+        '<input class="el-input__inner" type="text" data-field="hint" value="' + esc(a.hint || '') + '" placeholder="选填，Checkout 属性提示"></div></div>';
+      html += '</div>';
+
+      html += '<div class="el-form-item"><label class="el-form-item__label">属性值</label><div class="chip-list">';
+      a.opts.forEach(function (o) {
+        html += '<span class="opt-chip" data-opt-id="' + o.id + '">' +
+          '<input type="text" data-field="opt-name" value="' + esc(o.name) + '" title="可直接修改属性值名称">' +
+          '<i class="opt-del" data-action="del-opt" data-opt-id="' + o.id + '" title="删除属性值">✕</i>' +
+          '</span>';
+      });
+      html += '</div><input id="optInput-' + a.id + '" class="el-input__inner opt-input" type="text" placeholder="输入属性值后回车添加"></div>';
+
+      html += '<div class="el-form-item"><label class="el-form-item__label">默认选中' + esc(a.name) + '</label><div class="el-radio-group">';
+      a.opts.forEach(function (o) {
+        html += '<label class="el-radio-button' + (a.defaultOpt === o.id ? ' is-active' : '') + '" data-action="default-opt" data-opt-id="' + o.id + '">' +
+          '<span class="opt-text">' + esc(o.name) + '</span></label>';
+      });
+      html += '</div>';
+      if (!a.opts.length) html += '<div class="hint">该属性还没有属性值，请先在上方添加。</div>';
+      html += '<div class="hint">修改「默认选中」后，Checkout 中所有商品会同步为该默认值。</div></div>';
+
+      html += '</div></div>';
+    });
+    box.innerHTML = html || '<div class="empty-row">暂无属性，请在上方输入属性名后点击「添加属性」</div>';
+  }
+  function refreshOptLabels(a) {
+    var btns = document.querySelectorAll('#attrList .attr-card[data-attr-id="' + a.id + '"] .el-radio-button[data-opt-id]');
+    for (var i = 0; i < btns.length; i++) {
+      var oid = btns[i].getAttribute('data-opt-id');
+      var o = null;
+      for (var j = 0; j < a.opts.length; j++) { if (a.opts[j].id === oid) { o = a.opts[j]; break; } }
+      if (o) { var s = btns[i].querySelector('.opt-text'); if (s) s.textContent = o.name; }
+    }
+  }
+
+  /* ======================= 价格计算 ======================= */
+  function discountPct(orig, sale) {
+    if (!(orig > 0)) return 0;
+    return Math.round((1 - sale / orig) * 100);
+  }
+  function computeTierPrice(t) {
+    var matrix = readMatrix();
+    var qty = Math.max(1, t.qty);
+    var items = (state.sel[t.id] && state.sel[t.id].length) ? state.sel[t.id] : [defaultItem()];
+    var row = matrix[t.id] || {};
+    var keys = items.map(itemKey);
+    var same = true;
+    for (var i = 1; i < keys.length; i++) { if (keys[i] !== keys[0]) { same = false; break; } }
+    var orig = 0, sale = 0, ship = 0, i2, c, cell;
+    if (same) {
+      /* 同规格：直接取左侧该档位配置，保证与原始配置完全一致 */
+      cell = row[keys[0]] || { orig: 0, sale: 0, ship: 0 };
+      orig = cell.orig; sale = cell.sale; ship = cell.ship;
+    } else {
+      /* 混合规格：Σ(套餐总价 ÷ 套餐数量) */
+      for (i2 = 0; i2 < keys.length; i2++) {
+        c = row[keys[i2]] || { orig: 0, sale: 0, ship: 0 };
+        orig += c.orig / qty; sale += c.sale / qty; ship += c.ship / qty;
+      }
+    }
+    orig = r2(orig); sale = r2(sale); ship = r2(ship);
+    var units = items.map(function (it) {
+      var cc = row[itemKey(it)] || { orig: 0, sale: 0, ship: 0 };
+      return { orig: r2(cc.orig / qty), sale: r2(cc.sale / qty), ship: r2(cc.ship / qty) };
+    });
+    return { orig: orig, sale: sale, ship: ship, same: same, units: units, pct: discountPct(orig, sale) };
+  }
+
+  /* ======================= 渲染：Checkout 预览 ======================= */
+  function isColorAttr(a) { return /色|color/i.test(a.name); }
+  function colorOf(a, optId) {
+    var name = '';
+    for (var i = 0; i < a.opts.length; i++) { if (a.opts[i].id === optId) { name = a.opts[i].name; break; } }
+    if (COLOR_MAP[name]) return COLOR_MAP[name];
+    for (var k in COLOR_MAP) { if (name.indexOf(k) >= 0) return COLOR_MAP[k]; }
+    return '#dcdfe6';
+  }
+  function shipText(s) { return s <= 0 ? '运费免费' : '运费 ' + sym() + fmt(s); }
+  function descText(t) {
+    var s = '共 ' + t.qty + ' 件';
+    var items = state.sel[t.id] || [];
+    if (pricingAttrs().length && items.length) {
+      var labels = [];
+      items.forEach(function (it) {
+        var l = itemKeyLabel(it);
+        if (labels.indexOf(l) < 0) labels.push(l);
+      });
+      s += ' · ' + (labels.length === 1 ? labels[0] : '混合规格：' + labels.join(' / '));
+    }
+    return s;
+  }
+  function variantsHTML(t) {
+    var items = state.sel[t.id] || [];
+    var html = '<div class="tier-variants"><div class="variant-head">请为每件商品选择属性</div>';
+    items.forEach(function (item, idx) {
+      html += '<div class="variant-item">';
+      html += '<div class="variant-row"><span class="variant-label">商品 ' + (idx + 1) + '</span>' +
+        '<span class="unit" data-role="unit" data-item="' + idx + '"></span></div>';
+      html += '<div class="variant-controls">';
+      state.attrs.forEach(function (a) {
+        var cur = item[a.id];
+        var swatch = (isColorAttr(a) && cur)
+          ? '<i class="swatch' + (a.display === 'circle' ? ' is-circle' : '') + '" data-role="swatch" data-item="' + idx + '" data-attr="' + a.id + '" style="background:' + colorOf(a, cur) + '"></i>'
+          : '';
+        html += '<label><span class="ctl-label">' + esc(a.name) +
+          (a.pricing ? '<i class="tag-price" title="该属性参与价格计算">计入价格</i>' : '') + '</span>';
+        html += '<span class="ctl-row">' + swatch + '<select data-item="' + idx + '" data-attr="' + a.id + '">';
+        a.opts.forEach(function (o) {
+          html += '<option value="' + o.id + '"' + (o.id === cur ? ' selected' : '') + '>' + esc(o.name) + '</option>';
+        });
+        html += '</select></span>';
+        if (a.hint) html += '<span class="ctl-hint">' + esc(a.hint) + '</span>';
+        html += '</label>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+  function renderPreview() {
+    var box = document.getElementById('previewBody');
+    if (!state.tiers.length) {
+      box.innerHTML = '<div class="preview-empty">请先在左侧添加套餐</div>';
+      renderSummary();
+      return;
+    }
+    var html = '';
+    state.tiers.forEach(function (t) {
+      var sel = t.id === state.selectedTierId;
+      html += '<div class="tier-card' + (sel ? ' is-selected' : '') + '" data-tier-id="' + t.id + '">';
+      html += '<div class="tier-head" data-action="select-tier" role="button" tabindex="0" aria-pressed="' + (sel ? 'true' : 'false') + '">';
+      html += '<span class="radio-dot"></span>';
+      html += '<div class="tier-main"><div class="tier-name"><span data-role="tname">' + esc(t.name) + '</span>' +
+        (t.qty === 2 ? '<span class="badge-reco">推荐套餐</span>' : '') + '</div>' +
+        '<div class="tier-desc" data-role="desc"></div></div>';
+      html += '<div class="tier-prices">' +
+        '<div class="price-line"><span class="p-orig" data-role="orig"></span></div>' +
+        '<div class="price-line"><span class="p-sale" data-role="sale"></span><span class="p-off" data-role="off"></span></div>' +
+        '<div class="price-line sub"><span class="p-ship" data-role="ship"></span></div>' +
+        '</div></div>';
+      if (sel) html += variantsHTML(t);
+      html += '</div>';
+    });
+    box.innerHTML = html;
+    updatePreviewPrices();
+  }
+  function updatePreviewPrices() {
+    var cards = document.querySelectorAll('#previewBody .tier-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var t = findTier(card.getAttribute('data-tier-id'));
+      if (!t) continue;
+      var p = computeTierPrice(t);
+      setText(card, '[data-role="orig"]', sym() + fmt(p.orig));
+      setText(card, '[data-role="sale"]', sym() + fmt(p.sale));
+      setText(card, '[data-role="off"]', p.pct > 0 ? '省 ' + p.pct + '%' : '');
+      var sh = card.querySelector('[data-role="ship"]');
+      if (sh) { sh.textContent = shipText(p.ship); sh.className = 'p-ship' + (p.ship <= 0 ? ' free' : ''); }
+      setText(card, '[data-role="desc"]', descText(t));
+      var units = card.querySelectorAll('[data-role="unit"]');
+      for (var j = 0; j < units.length; j++) {
+        var idx = Number(units[j].getAttribute('data-item'));
+        var u = p.units[idx] || { sale: 0 };
+        units[j].textContent = '单件售价 ' + sym() + fmt(u.sale);
+      }
+      var sw = card.querySelectorAll('[data-role="swatch"]');
+      for (var k = 0; k < sw.length; k++) {
+        var a = findAttr(sw[k].getAttribute('data-attr'));
+        var itemIdx = Number(sw[k].getAttribute('data-item'));
+        var item = (state.sel[t.id] || [])[itemIdx];
+        if (a && item) sw[k].style.background = colorOf(a, item[a.id]);
+      }
+    }
+    renderSummary();
+  }
+  function renderSummary() {
+    var box = document.getElementById('previewSummary');
+    var t = findTier(state.selectedTierId) || state.tiers[0];
+    if (!t) { box.innerHTML = ''; return; }
+    var p = computeTierPrice(t);
+    var total = r2(p.sale + p.ship);
+    box.innerHTML =
+      '<div class="sum-title">订单摘要</div>' +
+      '<div class="sum-row"><span>商品小计（' + esc(t.name) + '）</span><span class="v">' + sym() + fmt(p.sale) + '</span></div>' +
+      '<div class="sum-row"><span>运费</span><span class="v">' + (p.ship <= 0 ? '免费' : sym() + fmt(p.ship)) + '</span></div>' +
+      '<div class="sum-row total"><span>合计</span><span class="sum-total">' + sym() + fmt(total) + '</span></div>' +
+      '<button type="button" class="btn-buy">立即购买</button>' +
+      '<p class="preview-hint">预览仅用于演示，实际以下单页为准</p>';
+  }
+  function updatePreviewHeader() {
+    document.getElementById('previewProduct').textContent = state.productName || '（未命名商品）';
+    document.getElementById('previewCurrency').textContent = sym() + ' · ' + state.currency;
+    document.getElementById('previewThumb').style.display = state.showProductImage ? '' : 'none';
+  }
+  function updateSwitch() {
+    var sw = document.getElementById('switchProductImage');
+    sw.className = 'el-switch' + (state.showProductImage ? ' is-checked' : '');
+    sw.setAttribute('aria-checked', state.showProductImage ? 'true' : 'false');
+    sw.querySelector('.el-switch__label').textContent = state.showProductImage ? '是' : '否';
+  }
+
+  /* ======================= 交互动作 ======================= */
+  function renderAll() {
+    renderTierTable();
+    renderDefaultGroup();
+    renderMatrix();
+    renderAttrs();
+    updatePreviewHeader();
+    updateSwitch();
+    renderPreview();
+  }
+  function selectTier(id) {
+    if (!findTier(id)) return;
+    state.selectedTierId = id;
+    renderDefaultGroup();
+    renderPreview();
+  }
+  function addTier() {
+    var last = state.tiers[state.tiers.length - 1];
+    var qty = last ? last.qty + 1 : 1;
+    if (qty > 99) { flash('最多支持 99 件装'); return; }
+    var t = makeTier(qty + ' 件装', qty);
+    state.tiers.push(t);
+    priceCache[t.id] = seedRow(t);
+    syncTierSel(t);
+    if (!state.selectedTierId) state.selectedTierId = t.id;
+    renderAll();
+  }
+  function removeTier(id) {
+    if (state.tiers.length <= 1) { flash('至少需要保留一个套餐'); return; }
+    state.tiers = state.tiers.filter(function (t) { return t.id !== id; });
+    delete state.sel[id];
+    delete priceCache[id];
+    if (state.selectedTierId === id) state.selectedTierId = state.tiers[0].id;
+    renderAll();
+  }
+  function addAttr() {
+    var input = document.getElementById('newAttrName');
+    var name = (input.value || '').trim();
+    if (!name) { input.focus(); return; }
+    state.attrs.push(makeAttr(name, [], false, 'square'));
+    input.value = '';
+    syncAllSel();
+    renderAll();
+    input.focus();
+  }
+  function removeAttr(id) {
+    state.attrs = state.attrs.filter(function (x) { return x.id !== id; });
+    Object.keys(state.sel).forEach(function (tid) {
+      state.sel[tid].forEach(function (it) { delete it[id]; });
+    });
+    renderAll();
+  }
+  function togglePricing(id) {
+    var a = findAttr(id);
+    if (!a) return;
+    a.pricing = !a.pricing;
+    if (a.pricing && !a.opts.length) flash('该属性还没有属性值，暂时无法参与价格计算');
+    syncAllSel();
+    renderAll();
+  }
+  function setDisplay(id, val) {
+    var a = findAttr(id);
+    if (!a) return;
+    a.display = val;
+    renderAll();
+  }
+  function setDefaultOpt(attrId, optId) {
+    var a = findAttr(attrId);
+    if (!a) return;
+    a.defaultOpt = optId;
+    Object.keys(state.sel).forEach(function (tid) {
+      state.sel[tid].forEach(function (it) { it[attrId] = optId; });
+    });
+    renderAll();
+  }
+  function removeOpt(attrId, optId) {
+    var a = findAttr(attrId);
+    if (!a) return;
+    if (a.opts.length <= 1) { flash('每个属性至少保留一个属性值'); return; }
+    a.opts = a.opts.filter(function (o) { return o.id !== optId; });
+    if (a.defaultOpt === optId) a.defaultOpt = a.opts[0].id;
+    syncAllSel();
+    renderAll();
+  }
+  function onTierNameChanged(t) {
+    refreshMatrixTierCell(t);
+    var btn = document.querySelector('#defaultTierGroup .el-radio-button[data-tier-id="' + t.id + '"] .opt-text');
+    if (btn) btn.textContent = t.name;
+    var card = document.querySelector('#previewBody .tier-card[data-tier-id="' + t.id + '"] [data-role="tname"]');
+    if (card) card.textContent = t.name;
+  }
+
+  /* ======================= 事件绑定 ======================= */
+  function onInput(e) {
+    var el = e.target;
+    if (!el || !el.matches) return;
+
+    if (el.matches('#priceTable input[data-field]')) {
+      captureMatrix();
+      updatePreviewPrices();
+      return;
+    }
+    if (el.id === 'productName') { state.productName = el.value; updatePreviewHeader(); return; }
+    if (el.matches('#tierTable input[data-field="name"]')) {
+      var t = findTier(el.closest('tr').getAttribute('data-tier-id'));
+      if (t) { t.name = el.value; onTierNameChanged(t); }
+      return;
+    }
+    if (el.matches('#tierTable input[data-field="qty"]')) {
+      var t2 = findTier(el.closest('tr').getAttribute('data-tier-id'));
+      if (t2) {
+        t2.qty = clampQty(el.value);
+        if (el.value !== String(t2.qty)) el.value = t2.qty;
+        syncTierSel(t2);
+        refreshMatrixTierCell(t2);
+        renderPreview();
+      }
+      return;
+    }
+    if (el.matches('#attrList input[data-field="opt-name"]')) {
+      var a = findAttr(el.closest('.attr-card').getAttribute('data-attr-id'));
+      if (a) {
+        var o = null;
+        for (var i = 0; i < a.opts.length; i++) { if (a.opts[i].id === el.getAttribute('data-opt-id')) { o = a.opts[i]; break; } }
+        if (o) {
+          o.name = el.value;
+          refreshMatrixDimCells();
+          refreshOptLabels(a);
+          renderPreview();
+        }
+      }
+      return;
+    }
+    if (el.matches('#attrList input[data-field="hint"]')) {
+      var a2 = findAttr(el.closest('.attr-card').getAttribute('data-attr-id'));
+      if (a2) { a2.hint = el.value; renderPreview(); }
+      return;
+    }
+  }
+  function onChange(e) {
+    var el = e.target;
+    if (!el || !el.matches) return;
+    if (el.id === 'currency') {
+      state.currency = el.value;
+      updatePreviewHeader();
+      updatePreviewPrices();
+      return;
+    }
+    if (el.matches('#previewBody select[data-attr]')) {
+      var card = el.closest('.tier-card');
+      var t = findTier(card.getAttribute('data-tier-id'));
+      var idx = Number(el.getAttribute('data-item'));
+      if (t && state.sel[t.id] && state.sel[t.id][idx]) {
+        state.sel[t.id][idx][el.getAttribute('data-attr')] = el.value;
+      }
+      updatePreviewPrices();
+      return;
+    }
+  }
+  function onClick(e) {
+    var el = e.target;
+    if (!el || !el.closest) return;
+
+    var tierRadio = el.closest('#defaultTierGroup .el-radio-button');
+    if (tierRadio) { selectTier(tierRadio.getAttribute('data-tier-id')); return; }
+
+    var head = el.closest('#previewBody .tier-head');
+    if (head) { selectTier(head.closest('.tier-card').getAttribute('data-tier-id')); return; }
+
+    var act = el.closest('[data-action]');
+    if (!act) return;
+    var action = act.getAttribute('data-action');
+
+    if (action === 'add-tier') { addTier(); return; }
+    if (action === 'del-tier') { removeTier(act.closest('[data-tier-id]').getAttribute('data-tier-id')); return; }
+    if (action === 'add-attr') { addAttr(); return; }
+    if (action === 'del-attr') { removeAttr(act.closest('.attr-card').getAttribute('data-attr-id')); return; }
+    if (action === 'pricing') { togglePricing(act.closest('.attr-card').getAttribute('data-attr-id')); return; }
+    if (action === 'display') { setDisplay(act.closest('.attr-card').getAttribute('data-attr-id'), act.getAttribute('data-val')); return; }
+    if (action === 'default-opt') { setDefaultOpt(act.closest('.attr-card').getAttribute('data-attr-id'), act.getAttribute('data-opt-id')); return; }
+    if (action === 'del-opt') { removeOpt(act.closest('.attr-card').getAttribute('data-attr-id'), act.getAttribute('data-opt-id')); return; }
+    if (action === 'toggle-image') {
+      state.showProductImage = !state.showProductImage;
+      updateSwitch();
+      updatePreviewHeader();
+      return;
+    }
+  }
+  function onKeydown(e) {
+    var el = e.target;
+    if (!el || !el.matches) return;
+    if (el.id === 'newAttrName' && e.key === 'Enter') { e.preventDefault(); addAttr(); return; }
+    if (el.matches('#attrList .opt-input') && e.key === 'Enter') {
+      e.preventDefault();
+      var a = findAttr(el.closest('.attr-card').getAttribute('data-attr-id'));
+      var v = (el.value || '').trim();
+      if (!a) return;
+      if (!v) { el.focus(); return; }
+      a.opts.push({ id: uid('o'), name: v });
+      el.value = '';
+      renderAll();
+      var again = document.getElementById('optInput-' + a.id);
+      if (again) again.focus();
+      return;
+    }
+    if (el.matches('#previewBody .tier-head') && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      selectTier(el.closest('.tier-card').getAttribute('data-tier-id'));
+    }
+  }
+
+  /* ======================= 初始化 ======================= */
+  function init() {
+    var cur = document.getElementById('currency');
+    cur.innerHTML = CURRENCIES.map(function (c) {
+      return '<option value="' + c.value + '"' + (c.value === state.currency ? ' selected' : '') + '>' + c.value + ' (' + c.symbol + ')</option>';
+    }).join('');
+
+    /* 默认属性：尺码参与价格计算，颜色仅用于展示 */
+    state.attrs.push(makeAttr('尺码', ['M', 'L', 'XL'], true, 'square'));
+    state.attrs.push(makeAttr('颜色', ['红色', '黑色', '咖啡色', '灰色', '蓝色', '紫色'], false, 'circle'));
+
+    [1, 2, 3, 4].forEach(function (q) {
+      var t = makeTier(q + ' 件装', q);
+      state.tiers.push(t);
+      priceCache[t.id] = seedRow(t);
+      syncTierSel(t);
+    });
+    state.selectedTierId = state.tiers[1].id;   /* 默认选中 2 件装 */
+
+    renderAll();
+  }
+
+  document.addEventListener('input', onInput);
+  document.addEventListener('change', onChange);
+  document.addEventListener('click', onClick);
+  document.addEventListener('keydown', onKeydown);
+  window.__cms = { state: state, priceCache: priceCache, readMatrix: readMatrix, computeTierPrice: computeTierPrice, pricingAttrs: pricingAttrs, priceCombos: priceCombos };
+  init();
+})();
+</script>
+</body>
+</html>
