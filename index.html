@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>原型集合 · wsttqs/prototype</title>
+<meta name="description" content="原型 Demo 集合：商品套餐定价与订单成本测算工具、ARB 广告预审、创意中心、产品定价配置等。" />
+<style>
+  :root{
+    --brand:#4338ca; --brand-2:#1e40af; --bg:#f6f8fc; --card:#fff;
+    --ink:#0f172a; --muted:#5a6b83; --line:#e2e8f0;
+    --warn:#d97706;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 64px}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{
+    width:40px;height:40px;border-radius:10px;background:var(--brand);
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;flex:0 0 auto;
+  }
+  h1{font-size:24px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:8px 0 28px;font-size:14px}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:32px 0 12px;font-weight:600}
+  .hero{
+    background:linear-gradient(135deg,var(--brand-2) 0%,var(--brand) 60%,#6d28d9 100%);
+    color:#fff;border-radius:16px;padding:26px 28px;margin-bottom:8px;
+    display:flex;gap:24px;align-items:center;flex-wrap:wrap;text-decoration:none;color:inherit;
+    box-shadow:0 10px 30px -12px rgba(67,56,202,.55);transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .hero:hover{transform:translateY(-2px);box-shadow:0 16px 38px -14px rgba(67,56,202,.65)}
+  .hero .txt{flex:1 1 420px;min-width:0}
+  .hero h3{margin:0 0 6px;font-size:20px}
+  .hero p{margin:0;opacity:.9;font-size:14px}
+  .tagrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .tag{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:3px 11px;font-size:12px}
+  .cta{background:#fff;color:var(--brand-2);font-weight:600;border-radius:10px;padding:11px 20px;white-space:nowrap;font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    text-decoration:none;color:inherit;display:block;transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
+  }
+  .card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:0 8px 22px -14px rgba(15,23,42,.4)}
+  .card b{display:block;font-size:15px;margin-bottom:4px}
+  .card span{color:var(--muted);font-size:13px}
+  .card .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--brand);margin-right:7px;vertical-align:1px}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+  a:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+  @media (max-width:560px){.wrap{padding:28px 16px 48px}.hero{padding:20px}.hero h3{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">原型</div>
+    <h1>原型 Demo 集合</h1>
+  </header>
+  <p class="sub">wsttqs/prototype · 静态原型与工具 Demo · 通过 GitHub Pages 发布</p>
+
+  <h2>重点</h2>
+  <a class="hero" href="pricing-tool/index.html">
+    <div class="txt">
+      <h3>商品套餐定价与订单成本测算工具</h3>
+      <p>集中输入 · 集中输出：按 SPU 选择商品、设置各套餐数量与折扣、匹配物流渠道与国家，逐套餐对比客单价 / 客单系数 / 物流+采购费用占比，并按购买占比加权汇总订单成本。</p>
+      <div class="tagrow">
+        <span class="tag">1369 条样例 SPU</span>
+        <span class="tag">446 条物流计价规则（已脱敏）</span>
+        <span class="tag">纯前端 · 无构建</span>
+        <span class="tag">53 项计算测试</span>
+      </div>
+    </div>
+    <span class="cta">打开 Demo →</span>
+  </a>
+
+  <h2>其它原型</h2>
+  <div class="grid">
+    <a class="card" href="product-pricing-config-checkout.html"><b><span class="dot"></span>产品定价配置 · Checkout 实时预览</b><span>定价配置与下单页联动预览</span></a>
+    <a class="card" href="ad-data-prediction-prototype.html"><b><span class="dot"></span>广告数据预测 | ARB Platform</b><span>广告投放数据预测原型</span></a>
+    <a class="card" href="arb-prototype-xianshenhoufa.html"><b><span class="dot"></span>ARB · 客户端 - 广告预审</b><span>广告预审客户端流程原型</span></a>
+    <a class="card" href="creative-center-prototype.html"><b><span class="dot"></span>创意中心 - 原型设计</b><span>素材创意中心原型</span></a>
+    <a class="card" href="novel-web-prototype.html"><b><span class="dot"></span>NovelWeb</b><span>小说站 Web 原型</span></a>
+    <a class="card" href="shortdrama-prototype.html"><b><span class="dot"></span>Short Drama - Prototype</b><span>短剧播放页原型</span></a>
+    <a class="card" href="cps-custom-html/index.html"><b><span class="dot"></span>CPS 自定义页面</b><span>列表 / 添加页面自定义组件</span></a>
+    <a class="card" href="cps-page-template/index.html"><b><span class="dot"></span>CPS 页面模板</b><span>可配置页面模板与组件库</span></a>
+    <a class="card" href="login.html"><b><span class="dot"></span>登录</b><span>统一登录页原型</span></a>
+  </div>
+
+  <footer>本仓库为静态原型集合，内容仅用于方案演示。演示数据中的商品成本与物流价目为脱敏合成样例，不代表任何真实报价，不得用于业务决策。</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#4338ca" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Cpath d='M8 9h16M8 16h16M8 23h10' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>商品套餐定价与订单成本测算工具 · Demo</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#sec-output">跳到测算结果</a>
+<div id="srLive" class="sr-only" role="status" aria-live="polite"></div>
+
+<!-- ============ 顶栏 ============ -->
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">套餐</div>
+      <div class="brand-txt">
+        <h1>商品套餐定价与订单成本测算工具</h1>
+        <p id="dataMeta">数据加载中…</p>
+      </div>
+    </div>
+    <div class="tools">
+      <label class="field-inline">
+        <span class="lbl">售价币种</span>
+        <select id="saleCurrency">
+          <option value="USD">$ 美元</option>
+          <option value="CNY">¥ 人民币</option>
+        </select>
+      </label>
+      <label class="field-inline" id="fxField">
+        <span class="lbl" id="fxLabel">1 USD =</span>
+        <input id="fxRate" type="number" min="0.0001" step="0.01" value="6.8" />
+        <span class="lbl">CNY</span>
+      </label>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 公开演示提示条（仅脱敏样例数据模式显示） ============ -->
+<div class="demobar" id="demoBar" hidden>
+  <div class="demobar-in">
+    <span class="demobar-tag">公开演示版</span>
+    <span class="demobar-text">本页面使用<b>脱敏样例数据</b>：SPU 采购成本与物流渠道价目表已替换为合成数值；商品编码、重量、重量段区间与全部定价 / 成本计算规则均与内部版一致，<b>结果不用于业务决策</b>。</span>
+  </div>
+</div>
+
+<!-- ============ 币种口径条 ============ -->
+<div class="fxbar">
+  <div class="fxbar-in">
+    <span class="fxbar-tag">币种口径</span>
+    <span>成本内部口径 <b>人民币 ¥</b>（SPU 采购价与物流价目表原生币种）</span>
+    <span class="dot">·</span>
+    <span>售价口径 <b id="fxSaleCur">$ 美元</b></span>
+    <span class="dot">·</span>
+    <span id="fxRateText">1 $ = 6.80 ¥</span>
+    <span class="dot">·</span>
+    <span class="muted">表中成本按汇率折算到售价币种展示；物流计价明细保留 ¥ 原值以便与价目表逐项核对。</span>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- 异常提示区 -->
+  <div id="alerts" class="alerts" aria-live="polite"></div>
+
+  <!-- ============ 1. 测算输入（集中输入区） ============ -->
+  <section class="card" id="sec-input" aria-labelledby="inputTitle">
+    <div class="card-head">
+      <div class="card-title">
+        <span class="idx" aria-hidden="true">1</span>
+        <h2 id="inputTitle">测算输入</h2>
+        <span class="card-sub">在这里一次性填好商品、定价、物流与订单结构条件，下方统一查看测算结果</span>
+      </div>
+      <a class="jump" href="#sec-output">查看测算结果 ↓</a>
+    </div>
+
+    <div class="card-body input-body">
+
+      <!-- 错误汇总：可聚焦 + 每条可跳到出错的输入框（ui-ux-pro-max 指南 Focusable Error Summary） -->
+      <div class="err-summary" id="errSummary" role="alert" tabindex="-1"
+           aria-labelledby="errSummaryTitle" hidden>
+        <div class="err-summary-head">
+          <b id="errSummaryTitle">需要修正</b>
+          <span class="err-summary-count" id="errSummaryCount"></span>
+        </div>
+        <ul class="err-summary-list" id="errSummaryList"></ul>
+      </div>
+
+      <!-- ---------- A. 商品信息 ---------- -->
+      <div class="input-group" id="group-product">
+        <div class="group-head">
+          <span class="gidx">A</span>
+          <h3>商品信息</h3>
+          <span class="gsub">选择 SPU 自动带入台账数据，或切换为手动录入</span>
+          <div class="seg" id="sourceSeg">
+            <button type="button" class="seg-btn is-active" data-source="spu">按 SPU 选择</button>
+            <button type="button" class="seg-btn" data-source="manual">手动录入</button>
+          </div>
+        </div>
+
+        <!-- SPU 检索面板 -->
+        <div id="spuPane" class="pane">
+          <div class="spu-search">
+            <label class="lbl spu-lbl" for="spuSearch">搜索 SPU</label>
+            <input id="spuSearch" type="search" autocomplete="off"
+                   aria-describedby="spuCount"
+                   placeholder="输入 SPU 编码或商品名称搜索，例如 KD00180 / 玻璃酒瓶" />
+            <span class="hint" id="spuCount"></span>
+          </div>
+          <div class="table-wrap spu-wrap" id="spuWrap">
+            <table class="tbl spu-tbl">
+              <thead>
+                <tr>
+                  <th class="c-spu" scope="col">SPU</th>
+                  <th scope="col">商品名称</th>
+                  <th class="num" scope="col">采购成本(¥)</th>
+                  <th class="num" scope="col">重量(g)</th>
+                  <th scope="col">录入时间</th>
+                  <th class="c-act" scope="col"><span class="sr-only">操作</span></th>
+                </tr>
+              </thead>
+              <tbody id="spuBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 手动录入面板 -->
+        <div id="manualPane" class="pane is-hidden">
+          <div class="manual-tip">
+            在下方表单中逐项填写商品信息。手动录入仅用于本次测算，不会写入 SPU 台账，也不会修改底层 SPU 数据。
+          </div>
+        </div>
+
+        <!-- 商品信息卡（两种方式共用同一份表单） -->
+        <div id="productCard" class="product-card">
+          <div class="pc-head">
+            <h3 id="pcTitle">尚未选择商品</h3>
+            <div class="pc-badges" id="pcBadges"></div>
+          </div>
+          <div class="pc-grid" id="pcFields"></div>
+          <div class="pc-note" id="pcNote"></div>
+        </div>
+      </div>
+
+      <!-- ---------- B. 套餐定价 ---------- -->
+      <div class="input-group" id="group-pricing">
+        <div class="group-head">
+          <span class="gidx">B</span>
+          <h3>套餐定价</h3>
+          <span class="gsub">默认按折扣规则自动计算售价，可对任意套餐单独手动改价</span>
+          <button type="button" class="btn btn-primary" id="addTierBtn">+ 添加套餐</button>
+        </div>
+
+        <div class="row-inline">
+          <label class="field-inline big">
+            <span class="lbl">单件售价</span>
+            <div class="ctl">
+              <span class="pre" id="unitPricePre">$</span>
+              <input id="unitSalePrice" type="number" step="0.01" min="0" placeholder="例如 19.99" />
+            </div>
+          </label>
+          <label class="field-inline">
+            <span class="lbl">单件折扣率<span class="sub">（单件售价 ÷ 折扣率 = 单件原价）</span></span>
+            <div class="ctl">
+              <input id="baseDiscount" type="number" step="0.01" min="0.01" max="1" value="0.5" />
+              <span class="unit" id="baseDiscountPct">= 50%</span>
+            </div>
+          </label>
+          <div class="rule-box" id="ruleBox"></div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl tier-tbl">
+            <thead>
+              <tr>
+                <th class="c-qty" scope="col">套餐数量</th>
+                <th class="c-rate" scope="col">折扣率</th>
+                <th class="num" scope="col">套餐原价</th>
+                <th class="num" scope="col">默认售价</th>
+                <th class="c-final" scope="col">最终售价</th>
+                <th class="c-mode" scope="col">计价方式</th>
+                <th class="c-act" scope="col">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tierBody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-note" id="tierNote"></div>
+      </div>
+
+      <!-- ---------- C. 物流与其他成本 ---------- -->
+      <div class="input-group" id="group-cost">
+        <div class="group-head">
+          <span class="gidx">C</span>
+          <h3>物流与其他成本</h3>
+          <span class="gsub">物流成本按随包计价规则计算；广告成本为可选输入，所有套餐共用</span>
+        </div>
+
+        <div class="grid-4">
+          <label class="field">
+            <span class="lbl">物流渠道</span>
+            <select id="channelSel"></select>
+          </label>
+          <label class="field">
+            <span class="lbl">目的国家 / 地区</span>
+            <select id="countrySel"></select>
+          </label>
+          <label class="field">
+            <span class="lbl">每笔订单获客成本<span class="opt">可选</span></span>
+            <div class="ctl">
+              <input id="adCost" type="number" step="0.01" min="0" placeholder="未填写则不计入总成本" />
+              <span class="pre" id="adPre">$</span>
+            </div>
+          </label>
+          <div class="field">
+            <span class="lbl">渠道规则信息</span>
+            <div class="info" id="logiInfo">—</div>
+          </div>
+        </div>
+
+        <details class="rules" id="rulesBox">
+          <summary>查看 <b id="rulesTitle">—</b> 的重量段计价规则</summary>
+          <div class="table-wrap">
+            <table class="tbl rules-tbl">
+              <thead>
+                <tr>
+                  <th class="num" scope="col">重量段 (kg) 左开右闭</th>
+                  <th class="num" scope="col">计重单价 (¥/kg)</th>
+                  <th class="num" scope="col">件价 (¥/件)</th>
+                  <th scope="col">生效日期</th>
+                  <th scope="col">命中套餐</th>
+                </tr>
+              </thead>
+              <tbody id="rulesBody"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <!-- ---------- D. 订单结构（购买占比） ---------- -->
+      <div class="input-group" id="group-mix">
+        <div class="group-head">
+          <span class="gidx">D</span>
+          <h3>订单结构（购买占比）</h3>
+          <span class="gsub">可选配置；填写后所有套餐合计必须为 100%，加权汇总见下方结果区</span>
+          <div class="mix-total" id="mixTotal" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="table-wrap mix-wrap">
+          <table class="tbl mix-tbl">
+            <thead>
+              <tr>
+                <th class="c-qty" scope="col">套餐数量</th>
+                <th class="c-pct" scope="col">购买占比 (%)</th>
+                <th class="c-final" scope="col">最终售价</th>
+              </tr>
+            </thead>
+            <tbody id="mixBody"></tbody>
+          </table>
+        </div>
+        <div class="mix-bar" id="mixBar" role="img" aria-label="尚未填写购买占比"></div>
+        <div class="tbl-note" id="mixNote"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 2. 测算结果（集中输出区） ============ -->
+  <section class="card" id="sec-output" aria-labelledby="outputTitle">
+    <div class="card-head">
+      <div class="card-title">
+        <span class="idx" aria-hidden="true">2</span>
+        <h2 id="outputTitle">测算结果</h2>
+        <span class="card-sub" id="resultMeta" role="status" aria-live="polite"></span>
+      </div>
+      <div class="head-chips" id="resultChips"></div>
+      <a class="jump" href="#sec-input">↑ 返回修改输入</a>
+    </div>
+
+    <div class="card-body">
+
+      <h3 class="blk-title">各套餐测算明细</h3>
+      <div class="table-wrap">
+        <table class="tbl res-tbl">
+          <caption class="sr-only">各套餐测算明细，按定价表现、商品及物流成本、其他成本三组展示</caption>
+          <thead>
+            <tr class="grp-row">
+              <th rowspan="2" class="c-qty grp-base" scope="col">套餐数量</th>
+              <th colspan="4" class="grp grp-price" scope="colgroup">定价表现</th>
+              <th colspan="4" class="grp grp-cost" scope="colgroup">商品及物流成本</th>
+              <th colspan="2" class="grp grp-other" scope="colgroup">其他成本</th>
+            </tr>
+            <tr class="hd-row">
+              <th class="num" scope="col" title="套餐原价 = 单件原价 × 套餐数量；单件原价 = 单件售价 ÷ 单件折扣率">套餐原价</th>
+              <th class="num" scope="col" title="当前套餐折扣率；默认售价 = 套餐原价 × 套餐折扣率">折扣率</th>
+              <th class="num kpi-h" scope="col" title="套餐客单价 = 最终实际售价（自动计算或人工调整后的最终价格）">套餐客单价</th>
+              <th class="num kpi-h" scope="col" title="客单系数 = 套餐客单价 ÷ 单件售价">客单系数</th>
+              <th class="num" scope="col" title="采购成本 = 单件采购成本 × 套餐数量">采购成本</th>
+              <th class="num" scope="col" title="按物流计价规则计算：件价 × 件数 + 计重单价 × 订单总重">物流成本</th>
+              <th class="num" scope="col" title="物流成本 + 采购成本">物流+采购费用</th>
+              <th class="num kpi-h" scope="col" title="费用占比 =（采购成本 + 物流成本）÷ 套餐客单价，不含广告成本">物流+采购费用占比</th>
+              <th class="num" scope="col" title="每笔订单获客成本，所有套餐共用；未填写则不计入">广告成本</th>
+              <th class="num kpi-h" scope="col" title="套餐总成本 = 采购成本 + 物流成本 + 广告成本（仅含已纳入项）">套餐总成本</th>
+            </tr>
+          </thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+      <div class="tbl-note">
+        点击任意套餐行（或用 Tab 聚焦该行后按 Enter / 空格）可展开运费计算明细（渠道、命中重量段、件价、计重单价、生效日期），用于与价目表逐项核对。
+      </div>
+
+      <div class="legend">
+        <div class="legend-head">计算口径</div>
+        <ul class="legend-list">
+          <li><b>套餐客单价</b> = 最终售价（自动计算或人工调整后的最终价格）</li>
+          <li><b>客单系数</b> = 套餐客单价 ÷ 单件售价</li>
+          <li><b>物流+采购费用</b> = 采购成本 + 物流成本</li>
+          <li><b>物流+采购费用占比</b> =（采购成本 + 物流成本）÷ 套餐客单价，不含广告成本</li>
+          <li><b>套餐总成本</b> = 采购成本 + 物流成本 + 广告成本（仅含已纳入项，非完整净成本）</li>
+        </ul>
+      </div>
+
+      <h3 class="blk-title">订单结构汇总</h3>
+      <div class="cards" id="metricCards"></div>
+      <div class="ref-note">
+        汇总口径：按上方填写的各套餐购买占比加权计算。当前成本口径仅含采购成本、物流成本与可选广告成本，
+        尚未纳入支付手续费、税费、平台费用与退款损失，因此<b>不代表净利润或利润率</b>。
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div><b>数据来源</b>：SPU信息-260901~261126.xlsx（1369 条）· 物流渠道计价规则-1126最新生效.xlsx（446 条重量段规则 · 4 个渠道）</div>
+    <div>三层结构：数据获取（可替换为系统 API） → 业务计算（纯函数，可测试） → 页面展示</div>
+  </footer>
+</main>
+
+<!-- 载入顺序：数据 → 配置 → 计算内核 → 数据源 → 页面 -->
+<script src="data/spu.data.js"></script>
+<script src="data/logistics.data.js"></script>
+<script src="config/pricing.config.js"></script>
+<script src="src/core/errors.js"></script>
+<script src="src/core/money.js"></script>
+<script src="src/core/pricing.js"></script>
+<script src="src/core/costs.js"></script>
+<script src="src/core/logistics.js"></script>
+<script src="src/core/mix.js"></script>
+<script src="src/core/calculator.js"></script>
+<script src="src/data/product-source.js"></script>
+<script src="src/data/logistics-source.js"></script>
+<script src="src/data/local-adapter.js"></script>
+<script src="src/ui/dom.js"></script>
+<script src="src/ui/state.js"></script>
+<script src="src/ui/render.js"></script>
+<script src="src/ui/app.js"></script>
+</body>
+</html>
